@@ -34,18 +34,18 @@ library(stringr)
 ```{r}
 
 # demographics
-data_demographics_raw <- read_csv("../../../data/AMP study/raw/data_demographics_raw.csv") |>
+data_demographics_raw <- read_csv("../data/raw/data_demographics_raw.csv") |>
   janitor::clean_names()
 
 # data_demographics_raw_messy <- read_csv("../../../data/AMP study/raw/data_demographics_raw_messy.csv", skip = 2) |>
 #   janitor::clean_names()
 
 # self report measure
-data_selfreport_raw <- read_csv("../../../data/AMP study/raw/data_selfreport_raw.csv") |>
+data_selfreport_raw <- read_csv("../data/raw/data_selfreport_raw.csv") |>
   janitor::clean_names()
 
 # affect attribution procedure
-data_amp_raw <- read_csv("../../../data/AMP study/raw/data_amp_raw.csv") |>
+data_amp_raw <- read_csv("../data/raw/data_amp_raw.csv") |>
   janitor::clean_names()
 
 ```
@@ -86,6 +86,23 @@ data_amp_performance_criteria <- data_amp_raw |>
   mutate(exclude_amp_performance = ifelse(proportion_fast_trials_amp > 0.10, "exclude", "include"))
 
 ```
+
+# Right number of trials
+
+```{r}
+
+data_amp_trials <- data_amp_raw |> 
+  filter(blockcode != "practice", 
+         trialcode != "instructions") |> 
+  count(subject) |> 
+  rename(number_trials = n)
+
+data_amp_trials |> 
+  count(number_trials)
+
+```
+
+
 
 # Self-reports
 
@@ -143,6 +160,10 @@ data_processed_duplicates <- data_processed_temp |>
 data_processed_before_exclusions <- data_processed_temp |>
   full_join(data_processed_duplicates, by = "subject")
 
+# join in thr trials df
+data_processed_before_exclusions_with_trials <- data_processed_before_exclusions |>
+  full_join(data_amp_trials, by = "subject")
+
 ```
 
 # Define master exclusions
@@ -150,17 +171,19 @@ data_processed_before_exclusions <- data_processed_temp |>
 ```{r}
 
 # create a master exclude_participant variable
-data_processed <- data_processed_before_exclusions |>
+data_processed <- data_processed_before_exclusions_with_trials |>
   mutate(exclude_participant = case_when(tolower(age) == "test" ~ "exclude",
                                          tolower(gender) == "test" ~ "exclude",
                                          is.na(mean_evaluation) ~ "exclude",
-                                         # in this case we will exclude participants with missing demographics data or outcomes measures data. 
-                                         # Note that "list-wise exclusions" like this aren't always justified, as missingness often isn't at random. 
-                                         # How to treat missing data is a  whole area of work in itself, which we wont cover here.
+                                         # in this case we will exclude participants with missing demographics data or                                                  outcomes measures data. 
+                                         # Note that "list-wise exclusions" like this aren't always justified, as                                                       missingness often isn't at random. 
+                                         # How to treat missing data is a  whole area of work in itself, which we wont cover                                             here.
                                          is.na(age) ~ "exclude", 
                                          is.na(gender) ~ "exclude",
                                          exclude_amp_performance == "exclude" ~ "exclude",
                                          exclude_duplicate_data == "exclude" ~ "exclude",
+                                         is.na(like) | is.na(positive) | is.na(prefer) ~ "exclude",
+                                         number_trials == 72 ~ "include", 
                                          TRUE ~ "include"))
 
 ```
@@ -173,7 +196,7 @@ data_processed <- data_processed_before_exclusions |>
 dir.create("../../../data/AMP study/processed/")
 
 # save data to disk in that dir
-write_csv(data_processed, "../../../data/AMP study/processed/data_processed.csv")
+write_csv(data_processed, "../data/processed/data_processed.csv")
 
 ```
 
