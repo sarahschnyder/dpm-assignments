@@ -1889,7 +1889,7 @@ stimuli using the Affective Misattribution Procedure (AMP) and
 self-reports</h1>
 <h3 class="subtitle">Analysis</h3>
 <h4 class="author">Template: Ian Hussey; content: [Student name]</h4>
-<h4 class="date">24 October, 2023</h4>
+<h4 class="date">01 November, 2023</h4>
 
 </div>
 
@@ -1904,7 +1904,7 @@ self-reports</h1>
 <div id="data" class="section level1">
 <h1>Data</h1>
 <p>Load the processed data and apply the global exclusions.</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>data_processed <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">&quot;../../../data/AMP study/processed/data_processed.csv&quot;</span>)</span>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>data_processed <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">&quot;../data/processed/data_processed.csv&quot;</span>)</span>
 <span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>data_processed_after_exclusions <span class="ot">&lt;-</span> data_processed <span class="sc">|&gt;</span></span>
 <span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>  <span class="fu">filter</span>(exclude_participant <span class="sc">==</span> <span class="st">&quot;include&quot;</span>)</span></code></pre></div>
@@ -2176,6 +2176,100 @@ Nonbinary
 </tbody>
 </table>
 </div>
+</div>
+<div id="amp-score" class="section level2">
+<h2>AMP Score</h2>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="co"># overall self-reported evaluations</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>dat_mean_amp_score <span class="ot">&lt;-</span> data_processed_after_exclusions <span class="sc">|&gt;</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">Mean =</span> <span class="fu">mean</span>(amp_score, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>            <span class="at">SD =</span> <span class="fu">sd</span>(amp_score, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">group =</span> <span class="st">&quot;Full sample&quot;</span>)</span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="co"># self-reported evaluations by gender category</span></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>dat_mean_amp_score_by_gender <span class="ot">&lt;-</span> data_processed_after_exclusions <span class="sc">|&gt;</span></span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>  <span class="fu">group_by</span>(<span class="at">group =</span> gender) <span class="sc">|&gt;</span></span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">Mean =</span> <span class="fu">mean</span>(amp_score, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>            <span class="at">SD =</span> <span class="fu">sd</span>(amp_score, <span class="at">na.rm =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a></span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a><span class="co"># combine both into one table</span></span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a><span class="fu">bind_rows</span>(dat_mean_amp_score,</span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a>          dat_mean_amp_score_by_gender) <span class="sc">|&gt;</span></span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a>  <span class="fu">select</span>(<span class="at">Subset =</span> group, Mean, SD) <span class="sc">|&gt;</span> <span class="co"># select variables of interest, and rename one </span></span>
+<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Subset =</span> stringr<span class="sc">::</span><span class="fu">str_to_sentence</span>(Subset)) <span class="sc">|&gt;</span> <span class="co"># Change the case of the Subset variable so that it prints nicely</span></span>
+<span id="cb8-18"><a href="#cb8-18" tabindex="-1"></a>  <span class="fu">mutate_if</span>(is.numeric, round_half_up, <span class="at">digits =</span> <span class="dv">3</span>) <span class="sc">|&gt;</span></span>
+<span id="cb8-19"><a href="#cb8-19" tabindex="-1"></a>  <span class="fu">kable</span>() <span class="sc">|&gt;</span></span>
+<span id="cb8-20"><a href="#cb8-20" tabindex="-1"></a>  <span class="fu">add_header_above</span>(<span class="at">header =</span> <span class="fu">c</span>(<span class="st">&quot; &quot;</span> <span class="ot">=</span> <span class="dv">1</span>, <span class="st">&quot;AMP Score&quot;</span> <span class="ot">=</span> <span class="dv">2</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb8-21"><a href="#cb8-21" tabindex="-1"></a>  <span class="fu">kable_classic</span>(<span class="at">full_width =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<table class=" lightable-classic" style="font-family: &quot;Arial Narrow&quot;, &quot;Source Sans Pro&quot;, sans-serif; width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="empty-cells: hide;border-bottom:hidden;" colspan="1">
+</th>
+<th style="border-bottom:hidden;padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="2">
+<div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+AMP Score
+</div>
+</th>
+</tr>
+<tr>
+<th style="text-align:left;">
+Subset
+</th>
+<th style="text-align:right;">
+Mean
+</th>
+<th style="text-align:right;">
+SD
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Full sample
+</td>
+<td style="text-align:right;">
+0.582
+</td>
+<td style="text-align:right;">
+0.193
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Female
+</td>
+<td style="text-align:right;">
+0.585
+</td>
+<td style="text-align:right;">
+0.212
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Male
+</td>
+<td style="text-align:right;">
+0.582
+</td>
+<td style="text-align:right;">
+0.185
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Nonbinary
+</td>
+<td style="text-align:right;">
+0.546
+</td>
+<td style="text-align:right;">
+0.063
+</td>
+</tr>
+</tbody>
+</table>
 <div id="descriptive-plots" class="section level3">
 <h3>Descriptive plots</h3>
 <p>TODO add descriptive plots for self-reported evaluations</p>
@@ -2207,17 +2301,18 @@ women</p>
 </div>
 <div id="session-info" class="section level1">
 <h1>Session info</h1>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code></pre></div>
-<pre><code>## R version 4.3.1 (2023-06-16)
-## Platform: aarch64-apple-darwin20 (64-bit)
-## Running under: macOS Sonoma 14.0
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code></pre></div>
+<pre><code>## R version 4.3.0 (2023-04-21 ucrt)
+## Platform: x86_64-w64-mingw32/x64 (64-bit)
+## Running under: Windows 11 x64 (build 22621)
 ## 
 ## Matrix products: default
-## BLAS:   /Library/Frameworks/R.framework/Versions/4.3-arm64/Resources/lib/libRblas.0.dylib 
-## LAPACK: /Library/Frameworks/R.framework/Versions/4.3-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.11.0
+## 
 ## 
 ## locale:
-## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+## [1] LC_COLLATE=German_Switzerland.utf8  LC_CTYPE=German_Switzerland.utf8   
+## [3] LC_MONETARY=German_Switzerland.utf8 LC_NUMERIC=C                       
+## [5] LC_TIME=German_Switzerland.utf8    
 ## 
 ## time zone: Europe/Zurich
 ## tzcode source: internal
@@ -2227,24 +2322,24 @@ women</p>
 ## 
 ## other attached packages:
 ##  [1] janitor_2.2.0    kableExtra_1.3.4 knitr_1.43       lubridate_1.9.2 
-##  [5] forcats_1.0.0    stringr_1.5.0    dplyr_1.1.3      purrr_1.0.2     
-##  [9] readr_2.1.4      tidyr_1.3.0      tibble_3.2.1     ggplot2_3.4.3   
+##  [5] forcats_1.0.0    stringr_1.5.0    dplyr_1.1.2      purrr_1.0.1     
+##  [9] readr_2.1.4      tidyr_1.3.0      tibble_3.2.1     ggplot2_3.4.2   
 ## [13] tidyverse_2.0.0 
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] sass_0.4.7        utf8_1.2.3        generics_0.1.3    xml2_1.3.5       
-##  [5] stringi_1.7.12    hms_1.1.3         digest_0.6.33     magrittr_2.0.3   
-##  [9] evaluate_0.21     grid_4.3.1        timechange_0.2.0  fastmap_1.1.1    
-## [13] jsonlite_1.8.7    httr_1.4.7        rvest_1.0.3       fansi_1.0.4      
+##  [1] sass_0.4.6        utf8_1.2.3        generics_0.1.3    xml2_1.3.4       
+##  [5] stringi_1.7.12    hms_1.1.3         digest_0.6.31     magrittr_2.0.3   
+##  [9] evaluate_0.21     grid_4.3.0        timechange_0.2.0  fastmap_1.1.1    
+## [13] jsonlite_1.8.5    httr_1.4.6        rvest_1.0.3       fansi_1.0.4      
 ## [17] viridisLite_0.4.2 scales_1.2.1      jquerylib_0.1.4   cli_3.6.1        
 ## [21] crayon_1.5.2      rlang_1.1.1       bit64_4.0.5       munsell_0.5.0    
-## [25] withr_2.5.0       cachem_1.0.8      yaml_2.3.7        parallel_4.3.1   
-## [29] tools_4.3.1       tzdb_0.4.0        colorspace_2.1-0  webshot_0.5.5    
-## [33] vctrs_0.6.3       R6_2.5.1          lifecycle_1.0.3   snakecase_0.11.1 
+## [25] withr_2.5.0       cachem_1.0.8      yaml_2.3.7        parallel_4.3.0   
+## [29] tools_4.3.0       tzdb_0.4.0        colorspace_2.1-0  webshot_0.5.5    
+## [33] vctrs_0.6.2       R6_2.5.1          lifecycle_1.0.3   snakecase_0.11.1 
 ## [37] bit_4.0.5         vroom_1.6.3       pkgconfig_2.0.3   pillar_1.9.0     
-## [41] bslib_0.5.1       gtable_0.3.4      glue_1.6.2        systemfonts_1.0.4
-## [45] highr_0.10        xfun_0.40         tidyselect_1.2.0  rstudioapi_0.15.0
-## [49] htmltools_0.5.6   rmarkdown_2.24    svglite_2.1.1     compiler_4.3.1</code></pre>
+## [41] bslib_0.5.0       gtable_0.3.3      glue_1.6.2        systemfonts_1.0.4
+## [45] highr_0.10        xfun_0.39         tidyselect_1.2.0  rstudioapi_0.14  
+## [49] htmltools_0.5.5   rmarkdown_2.22    svglite_2.1.1     compiler_4.3.0</code></pre>
 </div>
 
 

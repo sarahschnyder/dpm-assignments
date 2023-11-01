@@ -1665,7 +1665,7 @@ stimuli using the Affective Misattribution Procedure (AMP) and
 self-reports</h1>
 <h3 class="subtitle">Data processing</h3>
 <h4 class="author">Template: Ian Hussey; content: [Student name]</h4>
-<h4 class="date">30 October, 2023</h4>
+<h4 class="date">01 November, 2023</h4>
 
 </div>
 
@@ -1770,64 +1770,98 @@ elaborate strategy where you retain only their first completion.</li>
 <h1>Affect Misattribution Procedure</h1>
 <p>TODO extract evaluations on the AMP test blocks and convert to an
 overall bias score</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>data_amp_congruence <span class="ot">&lt;-</span> data_amp_raw <span class="sc">|&gt;</span> </span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  <span class="fu">select</span>(subject, <span class="at">evaluative_response =</span> correct, trialcode, blockcode) <span class="sc">|&gt;</span> </span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="fu">filter</span>(blockcode <span class="sc">!=</span> <span class="st">&quot;practice&quot;</span>, </span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>         trialcode <span class="sc">!=</span> <span class="st">&quot;instructions&quot;</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">trialcode_binary =</span> <span class="fu">ifelse</span>(trialcode <span class="sc">==</span> <span class="st">&quot;prime_positive&quot;</span>, <span class="dv">1</span>, <span class="dv">0</span>),</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>         <span class="at">congruence =</span> <span class="fu">ifelse</span>(trialcode_binary <span class="sc">==</span> evaluative_response, <span class="dv">1</span>, <span class="dv">0</span>)) </span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="co"># check if congruence is 0 when trialcode ends with _positive and evaluative_response is 1 and when trialcode ends with _negative and evaluative_response is 0, and if congruence is 0 when trialcode ends with _positive and evaluative_response is 0 and when trialcode ends with _negative and evaluative_response is 1</span></span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>congruence_correctness <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(</span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>  (<span class="fu">grepl</span>(<span class="st">&quot;_positive$&quot;</span>, data_amp_congruence<span class="sc">$</span>trialcode) <span class="sc">&amp;</span> data_amp_congruence<span class="sc">$</span>evaluative_response <span class="sc">==</span> <span class="dv">1</span> <span class="sc">&amp;</span> data_amp_congruence<span class="sc">$</span>congruence <span class="sc">==</span> <span class="dv">1</span>) <span class="sc">|</span></span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a>  (<span class="fu">grepl</span>(<span class="st">&quot;_positive$&quot;</span>, data_amp_congruence<span class="sc">$</span>trialcode) <span class="sc">&amp;</span> data_amp_congruence<span class="sc">$</span>evaluative_response <span class="sc">==</span> <span class="dv">0</span> <span class="sc">&amp;</span> data_amp_congruence<span class="sc">$</span>congruence <span class="sc">==</span> <span class="dv">0</span>) <span class="sc">|</span></span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a>  (<span class="fu">grepl</span>(<span class="st">&quot;_negative$&quot;</span>, data_amp_congruence<span class="sc">$</span>trialcode) <span class="sc">&amp;</span> data_amp_congruence<span class="sc">$</span>evaluative_response <span class="sc">==</span> <span class="dv">0</span> <span class="sc">&amp;</span> data_amp_congruence<span class="sc">$</span>congruence <span class="sc">==</span> <span class="dv">1</span>) <span class="sc">|</span></span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a>  (<span class="fu">grepl</span>(<span class="st">&quot;_negative$&quot;</span>, data_amp_congruence<span class="sc">$</span>trialcode) <span class="sc">&amp;</span> data_amp_congruence<span class="sc">$</span>evaluative_response <span class="sc">==</span> <span class="dv">1</span> <span class="sc">&amp;</span> data_amp_congruence<span class="sc">$</span>congruence <span class="sc">==</span> <span class="dv">0</span>),</span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a>  <span class="cn">TRUE</span>, <span class="cn">FALSE</span></span>
+<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a>)</span>
+<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a>congruence_correctness <span class="sc">|&gt;</span> <span class="fu">all</span>()</span></code></pre></div>
+<pre><code>## [1] TRUE</code></pre>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="co"># this check is okay</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="co"># summarize by subject</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>data_amp_score <span class="ot">&lt;-</span> data_amp_congruence <span class="sc">|&gt;</span> </span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>  <span class="fu">group_by</span>(subject) <span class="sc">|&gt;</span> </span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">amp_score =</span> <span class="fu">mean</span>(congruence, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>  <span class="fu">select</span>(subject, amp_score)</span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a><span class="co"># Check if the new variable is numeric and is between the value 0 and 1</span></span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a>(<span class="fu">is.numeric</span>(data_amp_score<span class="sc">$</span>amp_score) <span class="sc">&amp;</span> data_amp_score<span class="sc">$</span>amp_score <span class="sc">|&gt;</span> <span class="fu">between</span>(<span class="dv">0</span>, <span class="dv">1</span>)) <span class="sc">|&gt;</span> <span class="fu">all</span>()</span></code></pre></div>
+<pre><code>## [1] TRUE</code></pre>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="co"># this check is okay</span></span></code></pre></div>
 </div>
 <div id="combine" class="section level1">
 <h1>Combine</h1>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co"># combine all dfs created in the previous chunks</span></span>
-<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>data_processed_temp <span class="ot">&lt;-</span> dat_age_gender <span class="sc">|&gt;</span></span>
-<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="fu">full_join</span>(data_selfreport_scored, <span class="at">by =</span> <span class="st">&quot;subject&quot;</span>) <span class="sc">|&gt;</span> </span>
-<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  <span class="fu">full_join</span>(data_amp_performance_criteria, <span class="at">by =</span> <span class="st">&quot;subject&quot;</span>) <span class="sc">|&gt;</span></span>
-<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>  <span class="fu">full_join</span>(data_amp_completeness, <span class="at">by =</span> <span class="st">&quot;subject&quot;</span>)</span>
-<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a></span>
-<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a><span class="co"># flag all subjects with more than one row in the wide-format data. these should be excluded in the analysis.</span></span>
-<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="co"># a more elaborate approach would be to track down the individual dupicate cases and determine which of the mulitiple cases should be retained. </span></span>
-<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>data_processed_duplicates <span class="ot">&lt;-</span> data_processed_temp <span class="sc">|&gt;</span></span>
-<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>  <span class="fu">count</span>(subject) <span class="sc">|&gt;</span></span>
-<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">exclude_duplicate_data =</span> <span class="fu">if_else</span>(n <span class="sc">&gt;</span> <span class="dv">1</span>, <span class="st">&quot;exclude&quot;</span>, <span class="st">&quot;include&quot;</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>n)</span>
-<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a></span>
-<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a><span class="co"># join in the duplicates df</span></span>
-<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a>data_processed_before_exclusions <span class="ot">&lt;-</span> data_processed_temp <span class="sc">|&gt;</span></span>
-<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a>  <span class="fu">full_join</span>(data_processed_duplicates, <span class="at">by =</span> <span class="st">&quot;subject&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="co"># combine all dfs created in the previous chunks</span></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>data_processed_temp <span class="ot">&lt;-</span> dat_age_gender <span class="sc">|&gt;</span></span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  <span class="fu">full_join</span>(data_selfreport_scored, <span class="at">by =</span> <span class="st">&quot;subject&quot;</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>  <span class="fu">full_join</span>(data_amp_performance_criteria, <span class="at">by =</span> <span class="st">&quot;subject&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>  <span class="fu">full_join</span>(data_amp_completeness, <span class="at">by =</span> <span class="st">&quot;subject&quot;</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>  <span class="fu">full_join</span>(data_amp_score, <span class="at">by =</span> <span class="st">&quot;subject&quot;</span>)</span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a></span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="co"># flag all subjects with more than one row in the wide-format data. these should be excluded in the analysis.</span></span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a><span class="co"># a more elaborate approach would be to track down the individual dupicate cases and determine which of the mulitiple cases should be retained. </span></span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a>data_processed_duplicates <span class="ot">&lt;-</span> data_processed_temp <span class="sc">|&gt;</span></span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a>  <span class="fu">count</span>(subject) <span class="sc">|&gt;</span></span>
+<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">exclude_duplicate_data =</span> <span class="fu">if_else</span>(n <span class="sc">&gt;</span> <span class="dv">1</span>, <span class="st">&quot;exclude&quot;</span>, <span class="st">&quot;include&quot;</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb11-13"><a href="#cb11-13" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>n)</span>
+<span id="cb11-14"><a href="#cb11-14" tabindex="-1"></a></span>
+<span id="cb11-15"><a href="#cb11-15" tabindex="-1"></a><span class="co"># join in the duplicates df</span></span>
+<span id="cb11-16"><a href="#cb11-16" tabindex="-1"></a>data_processed_before_exclusions <span class="ot">&lt;-</span> data_processed_temp <span class="sc">|&gt;</span></span>
+<span id="cb11-17"><a href="#cb11-17" tabindex="-1"></a>  <span class="fu">full_join</span>(data_processed_duplicates, <span class="at">by =</span> <span class="st">&quot;subject&quot;</span>)</span></code></pre></div>
 </div>
 <div id="define-master-exclusions" class="section level1">
 <h1>Define master exclusions</h1>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="co"># create a master exclude_participant variable</span></span>
-<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>data_processed <span class="ot">&lt;-</span> data_processed_before_exclusions <span class="sc">|&gt;</span></span>
-<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">exclude_participant =</span> <span class="fu">case_when</span>(<span class="fu">tolower</span>(age) <span class="sc">==</span> <span class="st">&quot;test&quot;</span> <span class="sc">~</span> <span class="st">&quot;exclude&quot;</span>,</span>
-<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>                                         <span class="fu">tolower</span>(gender) <span class="sc">==</span> <span class="st">&quot;test&quot;</span> <span class="sc">~</span> <span class="st">&quot;exclude&quot;</span>,</span>
-<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>                                         <span class="fu">is.na</span>(mean_evaluation) <span class="sc">~</span> <span class="st">&quot;exclude&quot;</span>,</span>
-<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>                                         <span class="co"># in this case we will exclude participants with missing demographics data or outcomes measures data. </span></span>
-<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>                                         <span class="co"># Note that &quot;list-wise exclusions&quot; like this aren&#39;t always justified, as missingness often isn&#39;t at random. </span></span>
-<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>                                         <span class="co"># How to treat missing data is a  whole area of work in itself, which we wont cover here.</span></span>
-<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>                                         <span class="fu">is.na</span>(age) <span class="sc">~</span> <span class="st">&quot;exclude&quot;</span>, </span>
-<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>                                         <span class="fu">is.na</span>(gender) <span class="sc">~</span> <span class="st">&quot;exclude&quot;</span>,</span>
-<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>                                         exclude_amp_performance <span class="sc">==</span> <span class="st">&quot;exclude&quot;</span> <span class="sc">~</span> <span class="st">&quot;exclude&quot;</span>,</span>
-<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a>                                         exclude_duplicate_data <span class="sc">==</span> <span class="st">&quot;exclude&quot;</span> <span class="sc">~</span> <span class="st">&quot;exclude&quot;</span>,</span>
-<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a>                                         exclude_amp_completeness <span class="sc">==</span> <span class="st">&quot;exclude&quot;</span> <span class="sc">~</span> <span class="st">&quot;exclude&quot;</span>, </span>
-<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a>                                         <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">&quot;include&quot;</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="co"># create a master exclude_participant variable</span></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>data_processed <span class="ot">&lt;-</span> data_processed_before_exclusions <span class="sc">|&gt;</span></span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">exclude_participant =</span> <span class="fu">case_when</span>(<span class="fu">tolower</span>(age) <span class="sc">==</span> <span class="st">&quot;test&quot;</span> <span class="sc">~</span> <span class="st">&quot;exclude&quot;</span>,</span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>                                         <span class="fu">tolower</span>(gender) <span class="sc">==</span> <span class="st">&quot;test&quot;</span> <span class="sc">~</span> <span class="st">&quot;exclude&quot;</span>,</span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a>                                         <span class="fu">is.na</span>(mean_evaluation) <span class="sc">~</span> <span class="st">&quot;exclude&quot;</span>,</span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>                                         <span class="co"># in this case we will exclude participants with missing demographics data or outcomes measures data. </span></span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a>                                         <span class="co"># Note that &quot;list-wise exclusions&quot; like this aren&#39;t always justified, as missingness often isn&#39;t at random. </span></span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a>                                         <span class="co"># How to treat missing data is a  whole area of work in itself, which we wont cover here.</span></span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a>                                         <span class="fu">is.na</span>(age) <span class="sc">~</span> <span class="st">&quot;exclude&quot;</span>, </span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a>                                         <span class="fu">is.na</span>(gender) <span class="sc">~</span> <span class="st">&quot;exclude&quot;</span>,</span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a>                                         exclude_amp_performance <span class="sc">==</span> <span class="st">&quot;exclude&quot;</span> <span class="sc">~</span> <span class="st">&quot;exclude&quot;</span>,</span>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a>                                         exclude_duplicate_data <span class="sc">==</span> <span class="st">&quot;exclude&quot;</span> <span class="sc">~</span> <span class="st">&quot;exclude&quot;</span>,</span>
+<span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a>                                         exclude_amp_completeness <span class="sc">==</span> <span class="st">&quot;exclude&quot;</span> <span class="sc">~</span> <span class="st">&quot;exclude&quot;</span>, </span>
+<span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a>                                         <span class="fu">is.na</span>(amp_score) <span class="sc">~</span> <span class="st">&quot;exclude&quot;</span>,</span>
+<span id="cb12-15"><a href="#cb12-15" tabindex="-1"></a>                                         <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">&quot;include&quot;</span>))</span></code></pre></div>
 </div>
 <div id="write-to-disk" class="section level1">
 <h1>Write to disk</h1>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="co"># in case this dir doesn&#39;t exist, create it</span></span>
-<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="fu">dir.create</span>(<span class="st">&quot;../data/processed/&quot;</span>)</span>
-<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a></span>
-<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="co"># save data to disk in that dir</span></span>
-<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="fu">write_csv</span>(data_processed, <span class="st">&quot;../data/processed/data_processed.csv&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="co"># in case this dir doesn&#39;t exist, create it</span></span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="fu">dir.create</span>(<span class="st">&quot;../data/processed/&quot;</span>)</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a></span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a><span class="co"># save data to disk in that dir</span></span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a><span class="fu">write_csv</span>(data_processed, <span class="st">&quot;../data/processed/data_processed.csv&quot;</span>)</span></code></pre></div>
 </div>
 <div id="session-info" class="section level1">
 <h1>Session info</h1>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code></pre></div>
-<pre><code>## R version 4.3.1 (2023-06-16)
-## Platform: aarch64-apple-darwin20 (64-bit)
-## Running under: macOS Sonoma 14.0
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code></pre></div>
+<pre><code>## R version 4.3.0 (2023-04-21 ucrt)
+## Platform: x86_64-w64-mingw32/x64 (64-bit)
+## Running under: Windows 11 x64 (build 22621)
 ## 
 ## Matrix products: default
-## BLAS:   /Library/Frameworks/R.framework/Versions/4.3-arm64/Resources/lib/libRblas.0.dylib 
-## LAPACK: /Library/Frameworks/R.framework/Versions/4.3-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.11.0
+## 
 ## 
 ## locale:
-## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+## [1] LC_COLLATE=German_Switzerland.utf8  LC_CTYPE=German_Switzerland.utf8   
+## [3] LC_MONETARY=German_Switzerland.utf8 LC_NUMERIC=C                       
+## [5] LC_TIME=German_Switzerland.utf8    
 ## 
 ## time zone: Europe/Zurich
 ## tzcode source: internal
@@ -1837,22 +1871,22 @@ overall bias score</p>
 ## 
 ## other attached packages:
 ##  [1] janitor_2.2.0   lubridate_1.9.2 forcats_1.0.0   stringr_1.5.0  
-##  [5] dplyr_1.1.3     purrr_1.0.2     readr_2.1.4     tidyr_1.3.0    
-##  [9] tibble_3.2.1    ggplot2_3.4.4   tidyverse_2.0.0
+##  [5] dplyr_1.1.2     purrr_1.0.1     readr_2.1.4     tidyr_1.3.0    
+##  [9] tibble_3.2.1    ggplot2_3.4.2   tidyverse_2.0.0
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] bit_4.0.5         gtable_0.3.4      jsonlite_1.8.7    crayon_1.5.2     
-##  [5] compiler_4.3.1    tidyselect_1.2.0  parallel_4.3.1    snakecase_0.11.1 
-##  [9] jquerylib_0.1.4   scales_1.2.1      yaml_2.3.7        fastmap_1.1.1    
-## [13] R6_2.5.1          generics_0.1.3    knitr_1.43        munsell_0.5.0    
-## [17] bslib_0.5.1       pillar_1.9.0      tzdb_0.4.0        rlang_1.1.1      
-## [21] utf8_1.2.3        stringi_1.7.12    cachem_1.0.8      xfun_0.40        
-## [25] sass_0.4.7        bit64_4.0.5       timechange_0.2.0  cli_3.6.1        
-## [29] withr_2.5.0       magrittr_2.0.3    digest_0.6.33     grid_4.3.1       
-## [33] vroom_1.6.3       rstudioapi_0.15.0 hms_1.1.3         lifecycle_1.0.3  
-## [37] vctrs_0.6.3       evaluate_0.21     glue_1.6.2        fansi_1.0.4      
-## [41] colorspace_2.1-0  rmarkdown_2.24    tools_4.3.1       pkgconfig_2.0.3  
-## [45] htmltools_0.5.6</code></pre>
+##  [1] bit_4.0.5        gtable_0.3.3     jsonlite_1.8.5   crayon_1.5.2    
+##  [5] compiler_4.3.0   tidyselect_1.2.0 parallel_4.3.0   snakecase_0.11.1
+##  [9] jquerylib_0.1.4  scales_1.2.1     yaml_2.3.7       fastmap_1.1.1   
+## [13] R6_2.5.1         generics_0.1.3   knitr_1.43       munsell_0.5.0   
+## [17] bslib_0.5.0      pillar_1.9.0     tzdb_0.4.0       rlang_1.1.1     
+## [21] utf8_1.2.3       stringi_1.7.12   cachem_1.0.8     xfun_0.39       
+## [25] sass_0.4.6       bit64_4.0.5      timechange_0.2.0 cli_3.6.1       
+## [29] withr_2.5.0      magrittr_2.0.3   digest_0.6.31    grid_4.3.0      
+## [33] vroom_1.6.3      rstudioapi_0.14  hms_1.1.3        lifecycle_1.0.3 
+## [37] vctrs_0.6.2      evaluate_0.21    glue_1.6.2       fansi_1.0.4     
+## [41] colorspace_2.1-0 rmarkdown_2.22   tools_4.3.0      pkgconfig_2.0.3 
+## [45] htmltools_0.5.5</code></pre>
 </div>
 
 
