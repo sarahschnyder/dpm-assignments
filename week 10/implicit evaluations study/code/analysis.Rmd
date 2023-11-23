@@ -380,13 +380,14 @@ Histogram:
 data_processed_after_exclusions_without_nonbinary <- subset(data_processed_after_exclusions, gender %in% c("female", "male"))
 
 
-p_hist <- ggplot(data_processed_after_exclusions_without_nonbinary, aes(x = mean_evaluation)) +
+p_hist <- ggplot(data_processed_after_exclusions_without_nonbinary, aes(x = mean_evaluation, fill = gender)) +
   geom_histogram(binwidth = 1,
                  boundary = 0) +
   labs(title = "Self-reported Evaluations by Gender",
        x = "Mean evaluation",
        y = "Frequency") +
   theme_classic() +
+  theme(legend.position = "none")+
   scale_x_continuous(breaks = pretty_breaks(n = 7)) +
   coord_cartesian(xlim = c(1, 7)) +
   theme(panel.grid.minor = element_blank()) +
@@ -451,7 +452,7 @@ Histogram:
 data_processed_after_exclusions_without_nonbinary_reordered <- data_processed_after_exclusions_without_nonbinary |> 
   mutate(gender = factor(gender, levels = c("male", "female")))
 
-p_hist2 <- ggplot(data_processed_after_exclusions_without_nonbinary_reordered, aes(x = AMP_score)) +
+p_hist2 <- ggplot(data_processed_after_exclusions_without_nonbinary_reordered, aes(x = AMP_score, fill = gender)) +
   geom_histogram(binwidth = 0.1,
                  boundary = 0) +
   scale_fill_discrete(labels=c('Men', 'Women'))+
@@ -459,6 +460,7 @@ p_hist2 <- ggplot(data_processed_after_exclusions_without_nonbinary_reordered, a
        x = "Mean evaluation",
        y = "Frequency") +
   theme_classic() +
+  theme(legend.position = "none")+
   theme(panel.grid.minor = element_blank()) +
   facet_wrap(~gender, scales = "free",
              labeller = labeller(gender = c("male" = "Men", "female" = "Women")))
@@ -489,6 +491,7 @@ p_raincloud2 <- ggplot(data_processed_after_exclusions_without_nonbinary_reorder
   geom_rain() +
   labs(title = "AMP Score by Gender",
        x = "Gender",
+       fill = "Gender",
        y = "AMP Score") +
   scale_fill_discrete(labels=c('Men', 'Women'))+
   scale_x_discrete(labels=c('Men', 'Women'))+
