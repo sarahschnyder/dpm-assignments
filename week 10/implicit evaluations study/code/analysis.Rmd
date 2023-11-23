@@ -28,6 +28,7 @@ options(scipen = 999)
 ```{r}
 
 library(ggdist)
+library(ggrain)
 library(tidyverse)
 library(knitr)
 library(kableExtra)
@@ -175,6 +176,15 @@ ggplot(data_processed_after_exclusions, aes(x = mean_evaluation)) +
 \TODO add table of means, SDs, Ns
 
 ```{r}
+data_processed_after_exclusions |>
+  group_by(group = gender) |>
+  summarise(Mean = mean(AMP_score, na.rm = TRUE),
+            SD = sd(AMP_score, na.rm = TRUE),
+            n = n()) |> 
+  mutate_if(is.numeric, round_half_up, digits = 2) |> 
+  kable() |>
+  add_header_above(header = c(" " = 1, "AMP Score" = 3)) |>
+  kable_classic(full_width = FALSE)
 
 
 ```
@@ -238,7 +248,7 @@ ggplot(data_processed_after_exclusions,
 
 More complex plots:
 
-#### Axial hisograms
+#### Axial histograms
 
 Scatter plots with axial histograms using ggExtra: https://cran.r-project.org/web/packages/ggExtra/vignettes/ggExtra.html
 
@@ -248,12 +258,13 @@ Scatter plots with axial histograms using ggExtra: https://cran.r-project.org/we
 
 p <- ggplot(data_processed_after_exclusions, aes(x = AMP_score,
                                                  y = mean_evaluation, color = gender)) +
-  geom_jitter() +
+  geom_point(alpha = 0.7) + # turning down alpha a bit so you can see where are more points and where are less
   geom_smooth(se = FALSE, method = "lm") + 
   theme_classic() +
   xlab("AMP Score")+
   ylab("Mean evaluation")
 ggMarginal(p, groupColour = TRUE, groupFill = TRUE)
+
 
 ```
 
@@ -353,7 +364,7 @@ cor.test(data_processed_after_exclusions$AMP_score, data_processed_after_exclusi
 
 ```
 Spearman’s rank correlation was computed to assess the relationship between the self-reported evaluations and evaluations on the AMP.
-There was no significant correlation between the two variables, r(88) = -0.13, p = 0.23.
+There was no significant correlation between the two variables, r(88) = -0.13, *p* = 0.231.
 
 
 ## Self-reported evaluations differ between men and women
@@ -365,12 +376,21 @@ There was no significant correlation between the two variables, r(88) = -0.13, p
 Histogram:
 
 ```{r}
-p_hist <- ggplot(data_processed_after_exclusions, aes(x = mean_evaluation, fill = gender)) +
-  geom_histogram(position = "dodge", binwidth = 1) +
+# get only female and male in the dataset
+data_processed_after_exclusions_without_nonbinary <- subset(data_processed_after_exclusions, gender %in% c("female", "male"))
+
+
+p_hist <- ggplot(data_processed_after_exclusions_without_nonbinary, aes(x = mean_evaluation)) +
+  geom_histogram(binwidth = 1,
+                 boundary = 0) +
   labs(title = "Self-reported Evaluations by Gender",
        x = "Mean evaluation",
        y = "Frequency") +
-  theme_minimal()
+  theme_classic() +
+  scale_x_continuous(breaks = pretty_breaks(n = 7)) +
+  coord_cartesian(xlim = c(1, 7)) +
+  theme(panel.grid.minor = element_blank()) +
+  facet_wrap(~gender, scales = "free")
 
 p_hist
 
@@ -378,7 +398,7 @@ p_hist
 
 Violin Plot:
 ```{r}
-p_violin <- ggplot(data_processed_after_exclusions, aes(x = gender, y = mean_evaluation, fill = gender)) +
+p_violin <- ggplot(data_processed_after_exclusions_without_nonbinary, aes(x = gender, y = mean_evaluation, fill = gender)) +
   geom_violin() +
   labs(title = "Self-reported Evaluations by Gender",
        x = "Gender",
@@ -390,91 +410,13 @@ p_violin
 ```
 Raincloud Plot:
 ```{r}
-# stat_halfeye doesn't work with the variable mean_evaluation
-# i think because it's not normally distributed
-# so i got this function from someone on stackoverflow
 
-"%||%" <- function(a, b) {
-  if (!is.null(a)) a else b
-}
-
-geom_flat_violin <- function(mapping = NULL, data = NULL, stat = "ydensity",
-                             position = "dodge", trim = TRUE, scale = "area",
-                             show.legend = NA, inherit.aes = TRUE, ...) {
-  layer(
-    data = data,
-    mapping = mapping,
-    stat = stat,
-    geom = GeomFlatViolin,
-    position = position,
-    show.legend = show.legend,
-    inherit.aes = inherit.aes,
-    params = list(
-      trim = trim,
-      scale = scale,
-      ...
-    )
-  )
-}
-
-GeomFlatViolin <-
-  ggproto("GeomFlatViolin", Geom,
-          setup_data = function(data, params) {
-            data$width <- data$width %||%
-              params$width %||% (resolution(data$x, FALSE) * 0.9)
-            
-            # ymin, ymax, xmin, and xmax define the bounding rectangle for each group
-            data %>%
-              group_by(group) %>%
-              mutate(ymin = min(y),
-                     ymax = max(y),
-                     xmin = x - width / 2,
-                     xmax = x)
-          },
-          
-          draw_group = function(data, panel_scales, coord) {
-            # Find the points for the line to go all the way around
-            data <- transform(data, 
-                              xmaxv = x,
-                              xminv = x + violinwidth * (xmin - x))
-            
-            # Make sure it's sorted properly to draw the outline
-            newdata <- rbind(plyr::arrange(transform(data, x = xminv), y),
-                             plyr::arrange(transform(data, x = xmaxv), -y))
-            
-            # Close the polygon: set first and last point the same
-            # Needed for coord_polar and such
-            newdata <- rbind(newdata, newdata[1,])
-            
-            ggplot2:::ggname("geom_flat_violin", GeomPolygon$draw_panel(newdata, panel_scales, coord))
-          },
-          
-          draw_key = draw_key_polygon,
-          
-          default_aes = aes(weight = 1, colour = "grey20", fill = "white", size = 0.5,
-                            alpha = NA, linetype = "solid"),
-          
-          required_aes = c("x", "y")
-  )
-
-
-
-p_raincloud <- ggplot(data_processed_after_exclusions,aes(x = gender, y = mean_evaluation, fill = gender)) +
-  geom_flat_violin() +
-  geom_boxplot(
-    width = .1,
-    position= position_nudge(x=.1),
-    outlier.color = NA
-  )+
-  stat_dots(
-    side = "right",
-    position= position_nudge(x=.2)
-  ) +
+p_raincloud <- ggplot(data_processed_after_exclusions_without_nonbinary, aes(x = gender, y = mean_evaluation, fill = gender)) +
+  geom_rain() +
   labs(title = "Self-reported Evaluations by Gender",
        x = "Gender",
        y = "Mean evaluation") +
-  theme_minimal()
-
+  theme_classic()
 p_raincloud
 
 ```
@@ -486,16 +428,12 @@ p_raincloud
 
 ```{r}
 
-# for the test between men and women we exclude the nonbinary
 
-data_processed_after_exclusions_without_nonbinary <- data_processed_after_exclusions |> 
-  filter(gender != "nonbinary")
-
-t.test(data_processed_after_exclusions_without_nonbinary$mean_evaluation~data_processed_after_exclusions_without_nonbinary$gender, var.equal = TRUE, alternative = "two.sided")
+t.test(mean_evaluation~gender, data = data_processed_after_exclusions_without_nonbinary, alternative = "two.sided")
 
 ```
-A two sample t-test was computed to assess if there is a difference in self-reported evaluations between men and women.
-Men had significantly higher values in the self-reported evaluations compared to women, t(85) = -2.52, p = .01.
+Welch two sample t-test was computed to assess if there is a difference in self-reported evaluations between men and women.
+Men (*M* = 1.81, *SD* = 1.03) had significantly higher values in the self-reported evaluations compared to women (*M* = 1.32, *SD* = 0.71), *t*(83.14) = -2.62, *p* = .01.
 
 
 
@@ -510,32 +448,34 @@ This time, vary the labeling and order of the legend, e.g., capitalise "Men" and
 Histogram:
 
 ```{r}
-data_processed_after_exclusions_reordered <- data_processed_after_exclusions |> 
-  mutate(gender = factor(gender, levels = c("male", "female", "nonbinary")))
+data_processed_after_exclusions_without_nonbinary_reordered <- data_processed_after_exclusions_without_nonbinary |> 
+  mutate(gender = factor(gender, levels = c("male", "female")))
 
-p_hist2 <- ggplot(data_processed_after_exclusions_reordered, aes(x = AMP_score, fill = gender)) +
-  geom_histogram(position = "dodge", binwidth = 0.2) +
-  scale_fill_discrete(labels=c('Men', 'Women', 'Nonbinary'))+
+p_hist2 <- ggplot(data_processed_after_exclusions_without_nonbinary_reordered, aes(x = AMP_score)) +
+  geom_histogram(binwidth = 0.1,
+                 boundary = 0) +
+  scale_fill_discrete(labels=c('Men', 'Women'))+
   labs(title = "AMP Score by Gender",
-       x = "AMP Score",
-       y = "Frequency",
-       fill = "Gender") +
-  theme_minimal()
-
+       x = "Mean evaluation",
+       y = "Frequency") +
+  theme_classic() +
+  theme(panel.grid.minor = element_blank()) +
+  facet_wrap(~gender, scales = "free",
+             labeller = labeller(gender = c("male" = "Men", "female" = "Women")))
 
 p_hist2
 
 ```
 Violin Plot:
 ```{r}
-p_violin2 <- ggplot(data_processed_after_exclusions_reordered, aes(x = gender, y = AMP_score, fill = gender)) +
+p_violin2 <- ggplot(data_processed_after_exclusions_without_nonbinary_reordered, aes(x = gender, y = AMP_score, fill = gender)) +
   geom_violin() +
   labs(title = "AMP Score by Gender",
        fill = "Gender",
        x = "Gender",
        y = "AMP Score") +
-  scale_fill_discrete(labels=c('Men', 'Women', 'Nonbinary'))+
-  scale_x_discrete(labels=c('Men', 'Women', 'Nonbinary'))+
+  scale_fill_discrete(labels=c('Men', 'Women'))+
+  scale_x_discrete(labels=c('Men', 'Women'))+
   theme_minimal()
 
 p_violin2
@@ -544,30 +484,15 @@ p_violin2
 Raincloud Plot:
 
 ```{r}
-p_raincloud2 <- ggplot(data_processed_after_exclusions_reordered,aes(x = gender, y = AMP_score, fill = gender)) +
-  stat_halfeye(side = "left",
-               adjust = 0.5,
-               # remove the slub interval
-               .width = 0,
-               point_colour = NA) +
-  geom_boxplot(
-    width = .1,
-    position= position_nudge(x=.1),
-    outlier.color = NA
-  )+
-  stat_dots(
-    side = "right",
-    position= position_nudge(x=.2),
-    dotsize = 0.2
-  ) +
+
+p_raincloud2 <- ggplot(data_processed_after_exclusions_without_nonbinary_reordered, aes(x = gender, y = AMP_score, fill = gender)) +
+  geom_rain() +
   labs(title = "AMP Score by Gender",
-       fill = "Gender",
        x = "Gender",
        y = "AMP Score") +
-   scale_fill_discrete(labels=c('Men', 'Women', 'Nonbinary'))+
-  scale_x_discrete(labels=c('Men', 'Women', 'Nonbinary'))+
-  theme_minimal()
-
+  scale_fill_discrete(labels=c('Men', 'Women'))+
+  scale_x_discrete(labels=c('Men', 'Women'))+
+  theme_classic()
 p_raincloud2
 ```
 
@@ -578,12 +503,8 @@ p_raincloud2
 
 ```{r}
 
-# for the test between men and women we exclude the nonbinary
 
-data_processed_after_exclusions_without_nonbinary <- data_processed_after_exclusions |> 
-  filter(gender != "nonbinary")
-
-t.test(data_processed_after_exclusions_without_nonbinary$AMP_score~data_processed_after_exclusions_without_nonbinary$gender, var.equal = TRUE, alternative = "two.sided")
+t.test(AMP_score~gender, data = data_processed_after_exclusions_without_nonbinary, var.equal = TRUE, alternative = "two.sided")
 
 ```
 
