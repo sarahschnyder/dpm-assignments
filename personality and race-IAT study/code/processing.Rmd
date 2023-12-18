@@ -2,7 +2,6 @@
 title: "Examining the relationship between the big-5 personality facets and implicit racial attitudes"
 subtitle: "Processing"
 author: "Sarah Schnyder"
-output: html_document
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
   html_document:
@@ -21,6 +20,7 @@ library(tidyverse)
 library(janitor) 
 library(stringr)
 library(openxlsx)
+library(kableExtra)
 
 ```
 
@@ -32,7 +32,7 @@ library(openxlsx)
 data_bfi_raw <- read_csv("../data/raw/data_raw_bfi.csv") |>
   janitor::clean_names()
 
-data_iat_raw <- read_csv("../data/raw/data_raw_iat.csv") |>
+data_iat_raw <- read_csv("../data/raw/data_raw_iat.csv", skip = 1) |> # skip = 1, because the column names are in the second row
   janitor::clean_names()
 
 data_demographics_raw <- read_csv("../data/raw/data_raw_demographics.csv") |>
@@ -40,22 +40,35 @@ data_demographics_raw <- read_csv("../data/raw/data_raw_demographics.csv") |>
 
 ```
 
+# Demographics
+## Extract age and gender from raw demographics data
 
-\TODO make headings for the document
-
-Extract age and gender from the raw demographics data.
-\TODO put in the demographics data and do this task
 ```{r}
 
-data_demographics_wide <- data_demographics_raw |> 
+# remove the rows that have missing data in the column unique_id.
+# These rows are unusable, because I can't match them with other data.
+data_demographics_without_missing_ids <-
+  data_demographics_raw |> 
+  filter(!is.na(unique_id))
+
+# transform data into wide format and check if the data is correct
+data_demographics_wide <- data_demographics_without_missing_ids |> 
   pivot_wider(
     names_from = variable,
     values_from = response
+  ) |> 
+  mutate(sex = case_when(sex %in% c("f", "m") ~ sex,
+                         TRUE ~ "missing/other/error"),
+         age = case_when(str_detect(age, "^[0-9]+$") ~ age, # if the value is only numbers, keep it. 
+                         TRUE ~ "other/missing/error")
   )
 
 ```
 
-Reverse score the negatively worded items: the extroversion scale items 2, 5 and 7, conscientiousness items 2, 4 5 and 9, neuroticism items 2, 5, and 7, agreeableness 1, 3, 6, and 8, and openness items 7 and 9.
+
+# BFI
+## Reverse score the negatively worded items
+The negatively worded items are: the extroversion scale items 2, 5 and 7, conscientiousness items 2, 4 5 and 9, neuroticism items 2, 5, and 7, agreeableness 1, 3, 6, and 8, and openness items 7 and 9.
 
 ```{r}
 
@@ -73,18 +86,254 @@ max_possible_score <- 6 + 1
 data_bfi_reverse_scored <- data_bfi_raw |> 
   mutate(across(cols_reverse_score, ~ max_possible_score - .))
 
+
 ```
 
-- Include a sanity check that assesses whether these list of item reversals, and your implementation of them, is likely to be correct: For each subscale, create a correlation table among the items (after reversals) and check that all correlations are positive. IN general, negative correlations among items are one indication that information about item reversals, or their implementation, is not correct.  
-- Check that the item level data does not violate the logical minimum and maximum scores (1 to 6). Create an exclusion variable and set participants with impossible data to "exclude". 
-- Check that all participants have complete data on the BFI scales they completed. Create an exclusion variable and set participants with incomplete data to "exclude".
-- Mean-score the subscales of the BFI scale. Each participant only got either 2 or 3 subscales. 
-- Check that the mean scores do not violate the min and max possible score (i.e., first determine this min and max score), and revise your scoring code if it does. 
-- Score the trial-level IAT data using the Greenwald "D" score: Calculate a mean RT ("mean1") for blocks 3 and 6 (one score using trials from both blocks), a mean RT ("mean2") for blocks 4 and 7 (one score using trials from both blocks), and the SD of RTs in blocks 3, 4, 6 and 7 ("SD"). To calculate D: D = (mean2 - mean1)/SD. Blocks 1, 2, and 5 are practice blocks and must be discarded. 
-- Include a sanity check: check that all D scores are in the range -2 to +2. If not, revise your implementation of the scoring code. 
-- Create an exclusion variable and set participants with incomplete trial level IAT data to "exclude". Specifically, IAT should have 120 trials on the critical test blocks (i.e., blocks 3, 4, 6 and 7). Trials on the other (practice) blocks can be discarded.
-- Create an exclusion variable for IAT performance: set participants with >10% of the participants trials are < 300ms, or if their accuracy is < than 75%. Only use trials from the critical test blocks when computing these (i.e., blocks 3, 4, 6 and 7).
-- Combine the demographics, BFI, and IAT data into one data frame. This data frame should be one-row-one-participant. Both the mean scored and item level BFI data should be present in the dataset.
-- Create a master exclude variable from the individual exclude variables. 
-- Save the processed data to the data/processed/ folder as "data_processed.csv". 
-- Create a codebook for the processed data file that explains what each variable represents.
+### Sanity check for reverse scoring
+For each subscale, create a correlation table among the items (after reversals) and check that all correlations are positive. IN general, negative correlations among items are one indication that information about item reversals, or their implementation, is not correct.
+```{r}
+
+
+for(i in c("a", "c", "e", "n", "o")){
+  data_bfi_reverse_scored_subscale <- data_bfi_reverse_scored %>%
+    select(contains(paste0("bfi_", i))) # selecting only the columns of one subscale
+  
+  correlation_matrix <- cor(data_bfi_reverse_scored_subscale, use = "complete.obs") # making a correlation matrix
+  print(correlation_matrix)
+  print(ifelse(all(correlation_matrix > 0), 
+               paste0("All the correlations of the subscale ",
+                      i, " are positive."), 
+               paste0("NOT all of the correlations of the subscale ",
+                      i, " are positive."))) # checking if all the correlations are positive
+}
+
+
+
+```
+The only negative correlation found is between bfi_o7 and bfi_010. But since it's only one and that one is relatively small, I can take this check as a confirmation of the correctness of my reverse scoring.
+
+## BFI Excluding participants 
+
+Criteria for excluding participants:
+
+* values are not between 1 and 6
+* incomplete data on completed BFI scales
+
+```{r}
+
+# set new variable to include if all the values are between 1 and 6 or are missing value
+# set another new variable to include if either all values of one subscale or missing or all values of one subscale are not missing
+data_bfi_reverse_scored_exclusion_variable <- data_bfi_reverse_scored |> 
+  rowwise() |> 
+  mutate(exclude_between_1_and_6 = ifelse(
+    all(c_across(starts_with("bfi_")) %in% 1:6 | is.na(c_across(starts_with("bfi_")))), 
+    "include",
+    "exclude"
+  ),
+  exclude_incomplete_data = ifelse(
+    (all(is.na(c_across(starts_with("bfi_a")))) | all(!is.na(c_across(starts_with("bfi_a"))))) &
+      (all(is.na(c_across(starts_with("bfi_c")))) | all(!is.na(c_across(starts_with("bfi_c"))))) &
+      (all(is.na(c_across(starts_with("bfi_e")))) | all(!is.na(c_across(starts_with("bfi_e"))))) &
+      (all(is.na(c_across(starts_with("bfi_n")))) | all(!is.na(c_across(starts_with("bfi_n"))))) &
+      (all(is.na(c_across(starts_with("bfi_o")))) | all(!is.na(c_across(starts_with("bfi_o"))))),
+    "include",
+    "exclude"
+  )
+  )
+
+
+```
+
+
+## Mean-score of subscales
+
+```{r}
+
+
+data_bfi_reverse_scored_exclusion_variable$mean_bfi_a <- rowMeans(select(data_bfi_reverse_scored_exclusion_variable,starts_with("bfi_a")),
+                                                                  na.rm = TRUE)
+data_bfi_reverse_scored_exclusion_variable$mean_bfi_c <- rowMeans(select(data_bfi_reverse_scored_exclusion_variable,starts_with("bfi_c")),
+                                                                  na.rm = TRUE)
+data_bfi_reverse_scored_exclusion_variable$mean_bfi_e <- rowMeans(select(data_bfi_reverse_scored_exclusion_variable,starts_with("bfi_e")),
+                                                                  na.rm = TRUE)
+data_bfi_reverse_scored_exclusion_variable$mean_bfi_n <- rowMeans(select(data_bfi_reverse_scored_exclusion_variable,starts_with("bfi_n")),
+                                                                  na.rm = TRUE)
+data_bfi_reverse_scored_exclusion_variable$mean_bfi_o <- rowMeans(select(data_bfi_reverse_scored_exclusion_variable,starts_with("bfi_o")),
+                                                                  na.rm = TRUE)
+
+# check if the means are not smaller than 1 and not bigger than 6
+
+for (i in c("a", "c", "e", "n", "o")){
+  if(data_bfi_reverse_scored_exclusion_variable |> 
+     mutate(bounded_correctly = between(get(paste0("mean_bfi_", i)), left = 1, right = 6)) |>
+     filter(bounded_correctly != TRUE) |>
+     nrow() == 0) {
+    print(paste0("The mean score of the subscale ", i, " does not violate the min and max possible score."))
+  } else {
+    print(paste0("The mean score of the subscale ", i, " does violate the min and max possible score."))
+  }
+}
+
+
+```
+None of the mean score violates the min and max possible score. So I can take this as one hint, that the mean was build correctly.
+
+
+# IAT
+## Scoring the trial-level IAT
+
+Greenwald "D" score: 
+
+* Calculate a mean RT ("mean1") for blocks 3 and 6 (one score using trials from both blocks)
+* a mean RT ("mean2") for blocks 4 and 7 (one score using trials from both blocks)
+* and the SD of RTs in blocks 3, 4, 6 and 7 ("SD")
+* To calculate D: D = (mean2 - mean1)/SD
+* Blocks 1, 2, and 5 are practice blocks and must be discarded.
+
+```{r}
+
+# removing practice blocks
+data_iat_without_practice <-
+  data_iat_raw |> 
+  filter(!block_number %in% c(1,2,5))
+
+# Group by unique_id
+data_iat_without_practice_grouped <- data_iat_without_practice %>%
+  group_by(unique_id)
+
+# Calculating mean RT for blocks 3 and 6 for each unique_id
+data_iat_without_practice_grouped_means <- data_iat_without_practice_grouped %>%
+  filter(block_number %in% c(3, 6)) %>%
+  summarise(mean1 = mean(trial_reaction_time_in_ms))
+
+# Calculate mean RT for blocks 4 and 7 for each unique_id
+data_iat_without_practice_grouped_means<- data_iat_without_practice_grouped %>%
+  filter(block_number %in% c(4, 7)) %>%
+  summarise(mean2 = mean(trial_reaction_time_in_ms)) %>%
+  left_join(data_iat_without_practice_grouped_means, by = "unique_id")
+
+# Calculate SD of RTs for blocks 3, 4, 6, and 7 for each unique_id
+data_iat_without_practice_grouped_sd <- data_iat_without_practice_grouped %>%
+  filter(block_number %in% c(3, 4, 6, 7)) %>%
+  summarise(SD = sd(trial_reaction_time_in_ms))
+
+# Calculate D for each unique_id
+data_iat_without_practice_D_score <- data_iat_without_practice_grouped_means %>%
+  left_join(data_iat_without_practice_grouped_sd, by = "unique_id") %>%
+  mutate(D_score = (mean2 - mean1) / SD) |> 
+  select(unique_id, D_score) |> 
+  ungroup()
+
+# Print the new df
+print(data_iat_without_practice_D_score)
+
+
+# sanity check: Are all D scores in the range -2 to +2?
+if (all(data_iat_without_practice_D_score$D_score >= -2 & data_iat_without_practice_D_score$D_score <= 2)) {
+  print("All D scores are in the range -2 to +2.")
+} else {
+  print("Some D scores are outside the range -2 to +2.")
+}
+
+
+```
+
+## Exclusions
+Criteria for exclusions are:
+
+* incomplete trial level IAT data (normal are 120 trials)
+* \>10% of the trials are < 300 ms
+* accuracy is < 75%
+
+```{r}
+# getting a vector with all the IDs that don't have 120 trials
+iat_exclusion_incomplete_trial <- data_iat_without_practice |> 
+  group_by(unique_id) |> 
+  filter(all(c(3, 4, 6, 7) %in% block_number) & n() != 120) |> 
+  pull(unique_id) |> 
+  unique()
+
+# getting a vector with all the Ids that have < 300 ms reactions times in more than 10% of the trials
+data_iat_without_practice_rt <-
+  data_iat_without_practice |> 
+  mutate(short_rt = ifelse(trial_reaction_time_in_ms < 300, "short", "ok"))
+
+iat_exclusion_short_rt <- data_iat_without_practice_rt |> 
+  group_by(unique_id) |> 
+  mutate(proportion_short_rt = sum(short_rt == "short")/ n()) |> 
+  filter(proportion_short_rt > 0.10) |> 
+  pull(unique_id) |> 
+  unique()
+
+# getting a vector with all the Ids that have an accuracy < 75%
+iat_exclusion_low_accuracy <- data_iat_without_practice |> 
+  group_by(unique_id) |> 
+  mutate(accuracy = sum(trial_accuracy == "correct")/ n()) |> 
+  filter(accuracy < 0.75) |> 
+  pull(unique_id) |> 
+  unique()
+
+# create one vector with all the Ids that meet at one of the exclusion criteria
+iat_exclusion <- c(iat_exclusion_incomplete_trial, iat_exclusion_short_rt, iat_exclusion_low_accuracy)
+
+
+data_iat_without_practice_D_exclusions <-
+  data_iat_without_practice_D_score |> 
+  mutate(exclude_iat = case_when(unique_id %in% iat_exclusion ~ "exclude",
+                                 TRUE ~ "include"))
+
+```
+
+# Combining demographics, BFI and IAT 
+
+Creating a one-row-one-participant data frame out of all of the data frames.
+
+```{r}
+data_processed <-
+  data_demographics_wide |>
+  full_join(data_bfi_reverse_scored_exclusion_variable, by = "unique_id") |> 
+  full_join(data_iat_without_practice_D_exclusions, by = "unique_id") 
+
+print(data_processed)
+```
+
+## Master exclude variable
+
+```{r}
+data_processed_master_exclude <-
+  data_processed |> 
+  mutate(
+    exclusion = case_when(exclude_between_1_and_6 == "exclude" ~ "exclude",
+                          exclude_incomplete_data == "exclude"  ~"exclude",
+                          exclude_iat == "exclude" ~"exclude",
+                          TRUE ~ "include")
+  ) |> 
+  select(-c(exclude_between_1_and_6, exclude_incomplete_data, exclude_iat))
+
+
+```
+
+
+
+# Write to disk
+```{r}
+# in case this dir doesn't exist, create it
+dir.create("../data/processed/")
+
+# save data to disk in that dir
+write_csv(data_processed_master_exclude, "../data/processed/data_processed.csv")
+
+```
+
+
+# Create Codebook
+```{r}
+if(!file.exists("../data/processed/data_processed_codebook.xlsx")){
+  # convert the column names to a df
+  codebook_template <- data.frame(variable = colnames(data_processed_master_exclude)) |>
+    mutate(explanation = NA)
+  # write to disk as an excel file
+  write.xlsx(codebook_template, file = "../data/processed/data_processed_codebook.xlsx")
+}
+```
+

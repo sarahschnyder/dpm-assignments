@@ -18,7 +18,7 @@ Your assignment is to produce a well-organised and well-documented folder of dat
 
 # Structure
 
-- Ensure that your folder is called "personality and race-IAT study" and that it contains folders called "code", "data", and "communications" folders. "data" should contain "raw" and "processed" folders and their appropriate files.
+- Ensure that your folder is called "personality and race-IAT study" and that it contains folders called "code", "data", and "communications" folders. "data" should contain "raw" and "processed" folders and their appropriate files. 
 - Ensure that your code folder contains files called processing.Rmd and analysis.Rmd. When you are finished, ensure that you knit these to also create processing.html and analysis.html.
 - Your code should make use of consistent variable and object naming, eg using snake case (e.g., names_like_this) or whatever your preferred naming format is. Snake case is the default for tidyverse and I recommend it. 
 - Your code should make use of comments - it doesn't have to be exhaustive but provide some commentary on what you're doing, especially where code is more complex. 
