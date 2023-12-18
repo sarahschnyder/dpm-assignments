@@ -1,0 +1,19 @@
+---
+title: "Examining the relationship between the big-5 personality facets and implicit racial attitudes"
+subtitle: "Analysis"
+author: "Sarah Schnyder"
+output: html_document
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    code_folding: hide
+    highlight: haddock
+    theme: flatly
+    toc: yes
+    toc_float: yes
+---
+
+```{r}
+
+```
+

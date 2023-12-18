@@ -1,0 +1,90 @@
+---
+title: "Examining the relationship between the big-5 personality facets and implicit racial attitudes"
+subtitle: "Processing"
+author: "Sarah Schnyder"
+output: html_document
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    code_folding: hide
+    highlight: haddock
+    theme: flatly
+    toc: yes
+    toc_float: yes
+---
+
+# Dependencies
+
+```{r}
+
+library(tidyverse)
+library(janitor) 
+library(stringr)
+library(openxlsx)
+
+```
+
+
+# Get data
+
+```{r}
+
+data_bfi_raw <- read_csv("../data/raw/data_raw_bfi.csv") |>
+  janitor::clean_names()
+
+data_iat_raw <- read_csv("../data/raw/data_raw_iat.csv") |>
+  janitor::clean_names()
+
+data_demographics_raw <- read_csv("../data/raw/data_raw_demographics.csv") |>
+  janitor::clean_names()
+
+```
+
+
+\TODO make headings for the document
+
+Extract age and gender from the raw demographics data.
+\TODO put in the demographics data and do this task
+```{r}
+
+data_demographics_wide <- data_demographics_raw |> 
+  pivot_wider(
+    names_from = variable,
+    values_from = response
+  )
+
+```
+
+Reverse score the negatively worded items: the extroversion scale items 2, 5 and 7, conscientiousness items 2, 4 5 and 9, neuroticism items 2, 5, and 7, agreeableness 1, 3, 6, and 8, and openness items 7 and 9.
+
+```{r}
+
+# make vector with all columns, that need to be reverse scored
+cols_reverse_score <- c("e2", "e5", "e7",
+                        "c2", "c4", "c5", "c9",
+                        "n2", "n5", "n7",
+                        "a1", "a3", "a6", "a8",
+                        "o7", "o9")
+cols_reverse_score <- paste0("bfi_", cols_reverse_score)
+
+max_possible_score <- 6 + 1
+
+
+data_bfi_reverse_scored <- data_bfi_raw |> 
+  mutate(across(cols_reverse_score, ~ max_possible_score - .))
+
+```
+
+- Include a sanity check that assesses whether these list of item reversals, and your implementation of them, is likely to be correct: For each subscale, create a correlation table among the items (after reversals) and check that all correlations are positive. IN general, negative correlations among items are one indication that information about item reversals, or their implementation, is not correct.  
+- Check that the item level data does not violate the logical minimum and maximum scores (1 to 6). Create an exclusion variable and set participants with impossible data to "exclude". 
+- Check that all participants have complete data on the BFI scales they completed. Create an exclusion variable and set participants with incomplete data to "exclude".
+- Mean-score the subscales of the BFI scale. Each participant only got either 2 or 3 subscales. 
+- Check that the mean scores do not violate the min and max possible score (i.e., first determine this min and max score), and revise your scoring code if it does. 
+- Score the trial-level IAT data using the Greenwald "D" score: Calculate a mean RT ("mean1") for blocks 3 and 6 (one score using trials from both blocks), a mean RT ("mean2") for blocks 4 and 7 (one score using trials from both blocks), and the SD of RTs in blocks 3, 4, 6 and 7 ("SD"). To calculate D: D = (mean2 - mean1)/SD. Blocks 1, 2, and 5 are practice blocks and must be discarded. 
+- Include a sanity check: check that all D scores are in the range -2 to +2. If not, revise your implementation of the scoring code. 
+- Create an exclusion variable and set participants with incomplete trial level IAT data to "exclude". Specifically, IAT should have 120 trials on the critical test blocks (i.e., blocks 3, 4, 6 and 7). Trials on the other (practice) blocks can be discarded.
+- Create an exclusion variable for IAT performance: set participants with >10% of the participants trials are < 300ms, or if their accuracy is < than 75%. Only use trials from the critical test blocks when computing these (i.e., blocks 3, 4, 6 and 7).
+- Combine the demographics, BFI, and IAT data into one data frame. This data frame should be one-row-one-participant. Both the mean scored and item level BFI data should be present in the dataset.
+- Create a master exclude variable from the individual exclude variables. 
+- Save the processed data to the data/processed/ folder as "data_processed.csv". 
+- Create a codebook for the processed data file that explains what each variable represents.
