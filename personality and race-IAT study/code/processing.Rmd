@@ -220,8 +220,8 @@ data_iat_without_practice_grouped_sd <- data_iat_without_practice_grouped %>%
 # Calculate D for each unique_id
 data_iat_without_practice_D_score <- data_iat_without_practice_grouped_means %>%
   left_join(data_iat_without_practice_grouped_sd, by = "unique_id") %>%
-  mutate(D_score = (mean2 - mean1) / SD) |> 
-  select(unique_id, D_score) |> 
+  mutate(IAT_score = (mean2 - mean1) / SD) |> 
+  select(unique_id, IAT_score) |> 
   ungroup()
 
 # Print the new df
@@ -229,7 +229,7 @@ print(data_iat_without_practice_D_score)
 
 
 # sanity check: Are all D scores in the range -2 to +2?
-if (all(data_iat_without_practice_D_score$D_score >= -2 & data_iat_without_practice_D_score$D_score <= 2)) {
+if (all(data_iat_without_practice_D_score$IAT_score >= -2 & data_iat_without_practice_D_score$IAT_score <= 2)) {
   print("All D scores are in the range -2 to +2.")
 } else {
   print("Some D scores are outside the range -2 to +2.")

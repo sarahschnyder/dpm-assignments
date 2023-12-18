@@ -2020,28 +2020,28 @@ both blocks)</li>
 <span id="cb26-26"><a href="#cb26-26" tabindex="-1"></a><span class="co"># Calculate D for each unique_id</span></span>
 <span id="cb26-27"><a href="#cb26-27" tabindex="-1"></a>data_iat_without_practice_D_score <span class="ot">&lt;-</span> data_iat_without_practice_grouped_means <span class="sc">%&gt;%</span></span>
 <span id="cb26-28"><a href="#cb26-28" tabindex="-1"></a>  <span class="fu">left_join</span>(data_iat_without_practice_grouped_sd, <span class="at">by =</span> <span class="st">&quot;unique_id&quot;</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb26-29"><a href="#cb26-29" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">D_score =</span> (mean2 <span class="sc">-</span> mean1) <span class="sc">/</span> SD) <span class="sc">|&gt;</span> </span>
-<span id="cb26-30"><a href="#cb26-30" tabindex="-1"></a>  <span class="fu">select</span>(unique_id, D_score) <span class="sc">|&gt;</span> </span>
+<span id="cb26-29"><a href="#cb26-29" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">IAT_score =</span> (mean2 <span class="sc">-</span> mean1) <span class="sc">/</span> SD) <span class="sc">|&gt;</span> </span>
+<span id="cb26-30"><a href="#cb26-30" tabindex="-1"></a>  <span class="fu">select</span>(unique_id, IAT_score) <span class="sc">|&gt;</span> </span>
 <span id="cb26-31"><a href="#cb26-31" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span>
 <span id="cb26-32"><a href="#cb26-32" tabindex="-1"></a></span>
 <span id="cb26-33"><a href="#cb26-33" tabindex="-1"></a><span class="co"># Print the new df</span></span>
 <span id="cb26-34"><a href="#cb26-34" tabindex="-1"></a><span class="fu">print</span>(data_iat_without_practice_D_score)</span></code></pre></div>
 <pre><code>## # A tibble: 179 × 2
-##    unique_id D_score
-##        &lt;dbl&gt;   &lt;dbl&gt;
-##  1    162402 -0.546 
-##  2    163143 -0.799 
-##  3    164203 -0.0818
-##  4    164311 -0.361 
-##  5    164811 -0.349 
-##  6    167754 -0.328 
-##  7    170731 -0.148 
-##  8    173044 -0.270 
-##  9    173471 -0.0649
-## 10    173703 -0.492 
+##    unique_id IAT_score
+##        &lt;dbl&gt;     &lt;dbl&gt;
+##  1    162402   -0.546 
+##  2    163143   -0.799 
+##  3    164203   -0.0818
+##  4    164311   -0.361 
+##  5    164811   -0.349 
+##  6    167754   -0.328 
+##  7    170731   -0.148 
+##  8    173044   -0.270 
+##  9    173471   -0.0649
+## 10    173703   -0.492 
 ## # ℹ 169 more rows</code></pre>
 <div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" tabindex="-1"></a><span class="co"># sanity check: Are all D scores in the range -2 to +2?</span></span>
-<span id="cb28-2"><a href="#cb28-2" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">all</span>(data_iat_without_practice_D_score<span class="sc">$</span>D_score <span class="sc">&gt;=</span> <span class="sc">-</span><span class="dv">2</span> <span class="sc">&amp;</span> data_iat_without_practice_D_score<span class="sc">$</span>D_score <span class="sc">&lt;=</span> <span class="dv">2</span>)) {</span>
+<span id="cb28-2"><a href="#cb28-2" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">all</span>(data_iat_without_practice_D_score<span class="sc">$</span>IAT_score <span class="sc">&gt;=</span> <span class="sc">-</span><span class="dv">2</span> <span class="sc">&amp;</span> data_iat_without_practice_D_score<span class="sc">$</span>IAT_score <span class="sc">&lt;=</span> <span class="dv">2</span>)) {</span>
 <span id="cb28-3"><a href="#cb28-3" tabindex="-1"></a>  <span class="fu">print</span>(<span class="st">&quot;All D scores are in the range -2 to +2.&quot;</span>)</span>
 <span id="cb28-4"><a href="#cb28-4" tabindex="-1"></a>} <span class="cf">else</span> {</span>
 <span id="cb28-5"><a href="#cb28-5" tabindex="-1"></a>  <span class="fu">print</span>(<span class="st">&quot;Some D scores are outside the range -2 to +2.&quot;</span>)</span>
