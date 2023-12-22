@@ -106,10 +106,10 @@ For each subscale, create a correlation table among the items (after reversals) 
 
 
 for(i in c("a", "c", "e", "n", "o")){
-  data_bfi_reverse_scored_subscale <- data_bfi_reverse_scored %>%
+  data_bfi_reverse_scored_subscale <- data_bfi_reverse_scored |> 
     select(contains(paste0("bfi_", i))) # selecting only the columns of one subscale
   
-  correlation_matrix <- cor(data_bfi_reverse_scored_subscale, use = "complete.obs") # making a correlation matrix
+  correlation_matrix <- cor(data_bfi_reverse_scored_subscale, use = "complete.obs") # making a correlation matrix with only the complete observations
   print(correlation_matrix)
   print(ifelse(all(correlation_matrix > 0), 
                paste0("All the correlations of the subscale ",

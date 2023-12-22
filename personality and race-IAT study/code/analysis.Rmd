@@ -2,7 +2,6 @@
 title: "Examining the relationship between the big-5 personality facets and implicit racial attitudes"
 subtitle: "Analysis"
 author: "Sarah Schnyder"
-output: html_document
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
   html_document:
@@ -12,8 +11,415 @@ output:
     toc: yes
     toc_float: yes
 ---
+```{r, include=FALSE}
+
+# set knit options
+knitr::opts_chunk$set(message = FALSE,
+                      warning = FALSE)
+
+# disable scientific notation
+options(scipen = 999) 
+
+```
+
+# Dependencies
 
 ```{r}
 
+library(ggdist)
+library(ggrain)
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+library(janitor)
+library(scales)
+library(ggExtra)
+library(patchwork)
+library(ggrepel)
+library(remotes)
+library(ggmagnify)
+library(report)
+library(psych)
+
+```
+
+# Data
+
+Load the processed data and apply the global exclusions.
+
+```{r}
+
+data_processed <- read_csv("../data/processed/data_processed.csv")
+
+data_processed_after_exclusions <- data_processed |>
+  filter(exclusion == "include")
+
+```
+
+# Sample descriptives
+
+## Sample size before exclusions
+
+```{r}
+
+data_processed |>
+  count(name = "n") |>
+  kable() |>
+  add_header_above(header = c("Whole sample" = 1)) |> # note that you can add header rows to tables like this. The "1" indicates the number of columns the header should span. The sum of these numbers must equal the number of columns or you'll get an error.
+  kable_classic(full_width = FALSE)
+
+```
+
+## Sample size after exclusions
+
+```{r}
+
+data_processed_after_exclusions |>
+  count(name = "n") |>
+  kable() |>
+  add_header_above(header = c("For analysis" = 1)) |>
+  kable_classic(full_width = FALSE)
+
+```
+
+## Age
+
+```{r}
+
+data_processed_after_exclusions |>
+  mutate(age = as.numeric(age)) |>
+  summarise(Mean = mean(age, na.rm = TRUE),
+            SD = sd(age, na.rm = TRUE)) |>
+  mutate_all(.funs = janitor::round_half_up, digits = 1) |>
+  kable() |>
+  add_header_above(header = c("Age" = 2)) |>
+  kable_classic(full_width = FALSE)
+
+```
+
+## Sex
+
+```{r}
+
+data_processed_after_exclusions |> 
+  group_by(sex) |> 
+  summarise(n = n()) |> 
+  mutate(
+    sex = recode(sex, "f" = "female", "m" = "male"),
+    Percent = paste0(round_half_up((n / sum(n)) * 100, 1), "%")
+  ) |> 
+  rename(Sex = sex) |> 
+  kable() |> 
+  kable_classic(full_width = FALSE)
+
+
+```
+
+### Availability of demographics variables
+```{r}
+proportion_available_age <- 
+  (sum(data_processed_after_exclusions$age != "other/missing/error") / nrow(data_processed_after_exclusions)) |> 
+  round(3)
+
+proportion_available_sex <- 
+  (sum(data_processed_after_exclusions$sex %in% c("f", "m")) / nrow(data_processed_after_exclusions)) |> 
+  round(3)
+
+print(paste0("Variable age was available for ", proportion_available_age, " of participants and variable sex for ",
+             proportion_available_sex, " of participants."))
+
+
+```
+
+## Cronbachs alpha BFI subscales
+
+```{r}
+# defining a function to get all columns of one subscale in a vector
+function_items_subscale_bfi <- function(subscale, n){
+  items_subscale_bfi <- c()
+  for (i in 1:n){
+    items_subscale_bfi <- append(items_subscale_bfi, paste0("bfi_", subscale, i))
+  }
+  items_subscale_bfi
+}
+
+# agreeableness
+alpha(subset(data_processed_after_exclusions, 
+             select = function_items_subscale_bfi("a", 9)), check.keys =TRUE)
+
+# conscientiousness
+alpha(subset(data_processed_after_exclusions, 
+             select = function_items_subscale_bfi("c", 9)), check.keys =TRUE)
+
+# extraversion
+alpha(subset(data_processed_after_exclusions, 
+             select = function_items_subscale_bfi("e", 8)), check.keys =TRUE)
+
+# neuroticism
+alpha(subset(data_processed_after_exclusions, 
+             select = function_items_subscale_bfi("n", 8)), check.keys =TRUE)
+
+# openness
+alpha(subset(data_processed_after_exclusions, 
+             select = function_items_subscale_bfi("o", 10)), check.keys =TRUE)
+
+```
+These are the Cronbach's alpha for all the BFI subscales:
+
+* agreeableness: 0.78
+* conscientiousness: 0.81
+* extraversion: 0.82
+* neuroticism: 0.78
+* openness: 0.81
+
+# Descriptive Plots
+
+## BFI subscales
+```{r}
+
+# defining a function for the histograms for the BFI subscales
+histogram_bfi_subscales <- function(column, x_label){
+  
+  ggplot(data_processed_after_exclusions, aes(x = get(column))) +
+    geom_histogram(binwidth = 0.1,
+                   boundary = 0,
+                   fill = viridis_pal(begin = 0.45, option = "mako")(1), 
+                   color = viridis_pal(begin = 0.30, option = "mako")(1)) + 
+    xlab(x_label) +
+    ylab("Frequency") +
+    coord_cartesian(xlim = c(1,6))+
+    theme_linedraw() +
+    scale_x_continuous(breaks = pretty_breaks(n = 10))+
+    theme_minimal()
+}
+
+```
+
+### Agreeableness
+```{r}
+histogram_bfi_subscales("mean_bfi_a", "Mean Agreeableness")
+
+```
+
+
+
+### Conscientiousness
+```{r}
+histogram_bfi_subscales("mean_bfi_c", "Mean Conscientiousness")
+
+
+```
+
+
+### Extraversion
+```{r}
+histogram_bfi_subscales("mean_bfi_e", "Mean Extraversion")
+
+```
+
+### Neuroticism
+```{r}
+
+histogram_bfi_subscales("mean_bfi_n", "Mean Neuroticism")
+
+```
+
+### Openness
+```{r}
+
+histogram_bfi_subscales("mean_bfi_o", "Mean Openness")
+
+```
+
+
+
+## IAT score
+```{r}
+
+ggplot(data_processed_after_exclusions, aes(x = IAT_score)) +
+  geom_histogram(binwidth = 0.05,
+                 boundary = 0,
+                 fill = viridis_pal(begin = 0.45, option = "mako")(1), 
+                 color = viridis_pal(begin = 0.30, option = "mako")(1)) + 
+  xlab("IAT Score") +
+  ylab("Frequency") +
+  coord_cartesian(xlim = c(-2,2))+
+  theme_linedraw() +
+  scale_x_continuous(breaks = pretty_breaks(n = 10))+
+  theme_minimal()
+
+```
+
+# Correlation Matrix
+
+```{r}
+# making a new data frame with only the columnes required for the correlatio matrix
+data_processed_cols_correlation <- data_processed |> 
+  select(c(mean_bfi_a, mean_bfi_c, mean_bfi_e, mean_bfi_n, mean_bfi_o, IAT_score))
+
+# making the correlation matrix
+cor(data_processed_cols_correlation, use = "pairwise.complete.obs", method="pearson") |>
+  round(2)
+```
+Some correlations can't be computed because there are no subjects that answered that combination of subscales. E.g. there was no subject that answered the items to agreeableness and to extraversion. 
+
+
+# Hypothesis Testing
+## Hypothesis 1: Men and women differ on their scores on the IAT.
+To test this hypothesis I'm doing a t-test.
+```{r}
+# to run this test I'm creating a data frame with only the subjects that gave information about their sex
+data_processed_after_exclusions_sex <- data_processed_after_exclusions |> 
+  filter(sex %in% c("f", "m"))
+
+# running the t-test
+t.test(IAT_score~sex, data = data_processed_after_exclusions_sex, alternative = "two.sided")
+
+# reporting the t-test
+report(t.test(IAT_score~sex, data = data_processed_after_exclusions_sex, alternative = "two.sided"))
+
+
+```
+
+
+## Hypothesis 2: Each BFI subscale predicts IAT scores.
+To test this I'm doing a regression for each BFI subscale.
+
+
+
+### Hypothesis 2.1: The BFI subscale agreeableness predicts IAT scores.
+
+```{r}
+
+# creating the model
+model_a <- lm(IAT_score ~ mean_bfi_a, data = data_processed)
+
+# get summary of the model
+summary(model_a)
+
+# reporting the model
+report(model_a)
+
+```
+
+### Hypothesis 2.2: The BFI subscale conscientiousness predicts IAT scores.
+
+```{r}
+
+# creating the model
+model_c <- lm(IAT_score ~ mean_bfi_c, data = data_processed)
+
+# get summary of the model
+summary(model_c)
+
+# reporting the model
+report(model_c)
+
+```
+
+### Hypothesis 2.3: The BFI subscale extraversion predicts IAT scores.
+
+```{r}
+
+# creating the model
+model_e <- lm(IAT_score ~ mean_bfi_e, data = data_processed)
+
+# get summary of the model
+summary(model_e)
+
+# reporting the model
+report(model_e)
+
+
+```
+
+
+### Hypothesis 2.4: The BFI subscale neuroticism predicts IAT scores.
+
+```{r}
+
+# creating the model
+model_n <- lm(IAT_score ~ mean_bfi_n, data = data_processed)
+
+# get summary of the model
+summary(model_n)
+
+# reporting the model
+report(model_n)
+
+
+```
+
+### Hypothesis 2.5: The BFI subscale openness predicts IAT scores.
+
+```{r}
+
+# creating the model
+model_o <- lm(IAT_score ~ mean_bfi_o, data = data_processed)
+
+# get summary of the model
+summary(model_o)
+
+# reporting the model
+report(model_o)
+
+```
+# Scatter plots of how BFI subscale scores predict IAT
+
+```{r}
+# first lets make a new column defining if the IAT score is an extreme score or not
+IAT_top_10_percentile_threshold <- quantile(data_processed_after_exclusions$IAT_score, 0.9, na.rm = TRUE)
+IAT_bottom_10_percentile_threshold <- quantile(data_processed_after_exclusions$IAT_score, 0.1, na.rm = TRUE)
+
+data_processed_after_exclusions_extreme_IAT <- 
+  data_processed_after_exclusions |> 
+  mutate(extreme_IAT = ifelse(IAT_score >= IAT_top_10_percentile_threshold | IAT_score <= IAT_bottom_10_percentile_threshold,
+                              "extreme",
+                              "normal"))
+
+# lets define a function for making the plots
+function_plot_BFI_IAT <- function(column, name_subscale){
+  ggplot(data_processed_after_exclusions_extreme_IAT, # define which data frame should be used
+         aes(x = get(column), y = IAT_score)) + # define which variable is on the x and which is on the y axis
+    geom_point(alpha = 0.7, # turning down alpha a bit so you can see where are more points and where are less
+               aes(shape = extreme_IAT)) + # using different shapes based on extremeness of IAT score
+    scale_shape_manual(values = c(17, 16)) + # defining which shapes should be used
+    geom_smooth(method = "lm") + # add regression line
+    ggtitle(name_subscale)+ # add title for the whole plot
+    xlab(paste0("Mean ", name_subscale))+ # add label for x axis
+    ylab("IAT Score")+ # add label for y axis
+    theme_classic() + # give plot a classic theme
+    theme(plot.title = element_text(hjust = 0.5),  # Center the title horizontally
+          legend.position = "none")  # remove the legend
+  
+}
+
+```
+
+
+```{r}
+# defining all the plots
+p_a <- function_plot_BFI_IAT("mean_bfi_a", "Agreeableness")
+p_c <- function_plot_BFI_IAT("mean_bfi_c", "Conscientiousness")
+p_e <- function_plot_BFI_IAT("mean_bfi_e", "Extraversion")
+p_n <- function_plot_BFI_IAT("mean_bfi_n", "Neuroticism")
+p_o <- function_plot_BFI_IAT("mean_bfi_o", "Openness")
+ 
+
+# combine all plots into one
+combined_plot <- p_a + p_c + p_e + p_n + p_o 
+print(combined_plot)
+
+# save the combined plot
+ggsave("../communications/combined_plot.png", width = 20, plot = combined_plot, dpi = 300, device = "png")
+
+ggsave("../communications/combined_plot.pdf", width = 20, plot = combined_plot, dpi = 300, device = "pdf")
+```
+
+
+
+
+```{r}
+sessionInfo()
 ```
 
