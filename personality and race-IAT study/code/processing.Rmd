@@ -12,6 +12,17 @@ output:
     toc_float: yes
 ---
 
+```{r, include=FALSE}
+
+# set knit options
+knitr::opts_chunk$set(message = FALSE,
+                      warning = FALSE)
+
+# disable scientific notation
+options(scipen = 999) 
+
+```
+
 # Dependencies
 
 ```{r}
