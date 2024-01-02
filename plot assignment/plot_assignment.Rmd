@@ -23,6 +23,8 @@ knitr::opts_chunk$set(message = FALSE,
 ```{r}
 
 library(tidyverse)
+library(faux)
+library(readr)
 
 ```
 
@@ -48,6 +50,41 @@ Consider making use of the many extensions to ggplot2, e.g.:
 - see
 - ggsignif
 - and others: https://exts.ggplot2.tidyverse.org/gallery/
+
+# Simulating data
+
+```{r}
+# Set seed for reproducibility
+set.seed(123)
+
+# defining how many rows
+n_rows <- 100
+
+# generating random values for a few columns
+gender <- sample(c("male", "female"), n, replace = TRUE)
+relationship <- sample(c("yes", "no"), n, replace = TRUE)
+extraversion <- rnorm(n, mean = 3, sd = 1) |> 
+  round(1) |> 
+  pmin(5) |> 
+  pmax(1)
+
+
+# creating the data frame
+sim_data <- data.frame(gender, relationship, extraversion)
+
+# show the first few rows of the dataset
+head(sim_data)
+
+# save the dataset
+dir.create("data")
+write_csv(sim_data, "data/sim_data.csv")
+
+# reloading the dataset
+sim_data <- read.csv("data/sim_data.csv")
+
+
+```
+
 
 # Good plot
 
