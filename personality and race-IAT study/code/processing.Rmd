@@ -49,6 +49,8 @@ data_iat_raw <- read_csv("../data/raw/data_raw_iat.csv", skip = 1) |> # skip = 1
 data_demographics_raw <- read_csv("../data/raw/data_raw_demographics.csv") |>
   janitor::clean_names()
 
+
+
 ```
 
 # Demographics
@@ -57,17 +59,14 @@ data_demographics_raw <- read_csv("../data/raw/data_raw_demographics.csv") |>
 ```{r}
 
 # remove the rows that have missing data in the column unique_id.
-# These rows are unusable, because I can't match them with other data.
-data_demographics_without_missing_ids <-
-  data_demographics_raw |> 
+# These rows are unusable in this case, because I can't match them with other data.
+data_demographics_without_missing_ids <- data_demographics_raw |> 
   filter(!is.na(unique_id))
 
 # transform data into wide format and check if the data is correct
 data_demographics_wide <- data_demographics_without_missing_ids |> 
-  pivot_wider(
-    names_from = variable,
-    values_from = response
-  ) |> 
+  pivot_wider(names_from = variable,
+              values_from = response) |> 
   mutate(sex = case_when(sex %in% c("f", "m") ~ sex,
                          TRUE ~ "missing/other/error"),
          age = case_when(str_detect(age, "^[0-9]+$") ~ age, # if the value is only numbers, keep it. 
@@ -134,9 +133,9 @@ Criteria for excluding participants:
 
 # set new variable to include if all the values are between 1 and 6 or are missing value
 # set another new variable to include if either all values of one subscale or missing or all values of one subscale are not missing
-data_bfi_reverse_scored_exclusion_variable <- data_bfi_reverse_scored |> 
+data_bfi_reverse_scored_exclusion <- data_bfi_reverse_scored |> 
   rowwise() |> 
-  mutate(exclude_between_1_and_6 = ifelse(
+  mutate(exclude_not_between_1_and_6 = ifelse(
     all(c_across(starts_with("bfi_")) %in% 1:6 | is.na(c_across(starts_with("bfi_")))), 
     "include",
     "exclude"
@@ -161,27 +160,27 @@ data_bfi_reverse_scored_exclusion_variable <- data_bfi_reverse_scored |>
 ```{r}
 
 
-data_bfi_reverse_scored_exclusion_variable$mean_bfi_a <- rowMeans(select(data_bfi_reverse_scored_exclusion_variable,starts_with("bfi_a")),
+data_bfi_reverse_scored_exclusion$mean_bfi_a <- rowMeans(select(data_bfi_reverse_scored_exclusion,starts_with("bfi_a")),
                                                                   na.rm = TRUE)
-data_bfi_reverse_scored_exclusion_variable$mean_bfi_c <- rowMeans(select(data_bfi_reverse_scored_exclusion_variable,starts_with("bfi_c")),
+data_bfi_reverse_scored_exclusion$mean_bfi_c <- rowMeans(select(data_bfi_reverse_scored_exclusion,starts_with("bfi_c")),
                                                                   na.rm = TRUE)
-data_bfi_reverse_scored_exclusion_variable$mean_bfi_e <- rowMeans(select(data_bfi_reverse_scored_exclusion_variable,starts_with("bfi_e")),
+data_bfi_reverse_scored_exclusion$mean_bfi_e <- rowMeans(select(data_bfi_reverse_scored_exclusion,starts_with("bfi_e")),
                                                                   na.rm = TRUE)
-data_bfi_reverse_scored_exclusion_variable$mean_bfi_n <- rowMeans(select(data_bfi_reverse_scored_exclusion_variable,starts_with("bfi_n")),
+data_bfi_reverse_scored_exclusion$mean_bfi_n <- rowMeans(select(data_bfi_reverse_scored_exclusion,starts_with("bfi_n")),
                                                                   na.rm = TRUE)
-data_bfi_reverse_scored_exclusion_variable$mean_bfi_o <- rowMeans(select(data_bfi_reverse_scored_exclusion_variable,starts_with("bfi_o")),
+data_bfi_reverse_scored_exclusion$mean_bfi_o <- rowMeans(select(data_bfi_reverse_scored_exclusion,starts_with("bfi_o")),
                                                                   na.rm = TRUE)
 
 # check if the means are not smaller than 1 and not bigger than 6
 
 for (i in c("a", "c", "e", "n", "o")){
-  if(data_bfi_reverse_scored_exclusion_variable |> 
+  if(data_bfi_reverse_scored_exclusion |> 
      mutate(bounded_correctly = between(get(paste0("mean_bfi_", i)), left = 1, right = 6)) |>
      filter(bounded_correctly != TRUE) |>
      nrow() == 0) {
-    print(paste0("The mean score of the subscale ", i, " does not violate the min and max possible score."))
+    print(paste0("The mean scores of the subscale ", i, " do not violate the min and max possible score."))
   } else {
-    print(paste0("The mean score of the subscale ", i, " does violate the min and max possible score."))
+    print(paste0("The mean scores of the subscale ", i, " do violate the min and max possible score."))
   }
 }
 
@@ -191,7 +190,7 @@ None of the mean score violates the min and max possible score. So I can take th
 
 
 # IAT
-## Scoring the trial-level IAT
+## Scoring the trial-level IAT using Greenwald "D" score
 
 Greenwald "D" score: 
 
@@ -297,29 +296,32 @@ data_iat_without_practice_D_exclusions <-
 
 # Combining demographics, BFI and IAT 
 
-Creating a one-row-one-participant data frame out of all of the data frames.
+Creating a one-row-one-participant data frame out of all of the data frames. 
 
 ```{r}
 data_processed <-
   data_demographics_wide |>
-  full_join(data_bfi_reverse_scored_exclusion_variable, by = "unique_id") |> 
+  full_join(data_bfi_reverse_scored_exclusion, by = "unique_id") |> 
   full_join(data_iat_without_practice_D_exclusions, by = "unique_id") 
+
 
 print(data_processed)
 ```
 
 ## Master exclude variable
+Setting the variable exclusion to exclude if one of the exclusion variables is "exclude". Also setting it to exclude, if all the exclusion variables are NA, because that means there is only demographic data and not data for BFI and IAT.
 
 ```{r}
-data_processed_master_exclude <-
-  data_processed |> 
+
+data_processed_master_exclude <- data_processed |> 
   mutate(
-    exclusion = case_when(exclude_between_1_and_6 == "exclude" ~ "exclude",
-                          exclude_incomplete_data == "exclude"  ~"exclude",
-                          exclude_iat == "exclude" ~"exclude",
+    exclusion = case_when(exclude_not_between_1_and_6 == "exclude"~ "exclude",
+                          exclude_incomplete_data == "exclude"  ~ "exclude",
+                          exclude_iat == "exclude" ~ "exclude",
+                          is.na(exclude_not_between_1_and_6) & is.na(exclude_incomplete_data) & is.na(exclude_iat) ~ "exclude",
                           TRUE ~ "include")
   ) |> 
-  select(-c(exclude_between_1_and_6, exclude_incomplete_data, exclude_iat))
+  select(-c(exclude_not_between_1_and_6, exclude_incomplete_data, exclude_iat))
 
 
 ```

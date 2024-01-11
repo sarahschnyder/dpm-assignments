@@ -1664,7 +1664,7 @@ border-radius: 0px;
 big-5 personality facets and implicit racial attitudes</h1>
 <h3 class="subtitle">Processing</h3>
 <h4 class="author">Sarah Schnyder</h4>
-<h4 class="date">22 Dezember, 2023</h4>
+<h4 class="date">11 Januar, 2024</h4>
 
 </div>
 
@@ -1693,22 +1693,19 @@ big-5 personality facets and implicit racial attitudes</h1>
 <div id="extract-age-and-gender-from-raw-demographics-data" class="section level2">
 <h2>Extract age and gender from raw demographics data</h2>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># remove the rows that have missing data in the column unique_id.</span></span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="co"># These rows are unusable, because I can&#39;t match them with other data.</span></span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>data_demographics_without_missing_ids <span class="ot">&lt;-</span></span>
-<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  data_demographics_raw <span class="sc">|&gt;</span> </span>
-<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(unique_id))</span>
-<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a></span>
-<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="co"># transform data into wide format and check if the data is correct</span></span>
-<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>data_demographics_wide <span class="ot">&lt;-</span> data_demographics_without_missing_ids <span class="sc">|&gt;</span> </span>
-<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(</span>
-<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>    <span class="at">names_from =</span> variable,</span>
-<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>    <span class="at">values_from =</span> response</span>
-<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a>  ) <span class="sc">|&gt;</span> </span>
-<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">sex =</span> <span class="fu">case_when</span>(sex <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;f&quot;</span>, <span class="st">&quot;m&quot;</span>) <span class="sc">~</span> sex,</span>
-<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a>                         <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">&quot;missing/other/error&quot;</span>),</span>
-<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a>         <span class="at">age =</span> <span class="fu">case_when</span>(<span class="fu">str_detect</span>(age, <span class="st">&quot;^[0-9]+$&quot;</span>) <span class="sc">~</span> age, <span class="co"># if the value is only numbers, keep it. </span></span>
-<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a>                         <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">&quot;other/missing/error&quot;</span>)</span>
-<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a>  )</span></code></pre></div>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="co"># These rows are unusable in this case, because I can&#39;t match them with other data.</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>data_demographics_without_missing_ids <span class="ot">&lt;-</span> data_demographics_raw <span class="sc">|&gt;</span> </span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(unique_id))</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co"># transform data into wide format and check if the data is correct</span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>data_demographics_wide <span class="ot">&lt;-</span> data_demographics_without_missing_ids <span class="sc">|&gt;</span> </span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> variable,</span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>              <span class="at">values_from =</span> response) <span class="sc">|&gt;</span> </span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">sex =</span> <span class="fu">case_when</span>(sex <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;f&quot;</span>, <span class="st">&quot;m&quot;</span>) <span class="sc">~</span> sex,</span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>                         <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">&quot;missing/other/error&quot;</span>),</span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a>         <span class="at">age =</span> <span class="fu">case_when</span>(<span class="fu">str_detect</span>(age, <span class="st">&quot;^[0-9]+$&quot;</span>) <span class="sc">~</span> age, <span class="co"># if the value is only numbers, keep it. </span></span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a>                         <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">&quot;other/missing/error&quot;</span>)</span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a>  )</span></code></pre></div>
 </div>
 </div>
 <div id="bfi" class="section level1">
@@ -1738,10 +1735,10 @@ reversals) and check that all correlations are positive. IN general,
 negative correlations among items are one indication that information
 about item reversals, or their implementation, is not correct.</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="fu">c</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;c&quot;</span>, <span class="st">&quot;e&quot;</span>, <span class="st">&quot;n&quot;</span>, <span class="st">&quot;o&quot;</span>)){</span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>  data_bfi_reverse_scored_subscale <span class="ot">&lt;-</span> data_bfi_reverse_scored <span class="sc">%&gt;%</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>  data_bfi_reverse_scored_subscale <span class="ot">&lt;-</span> data_bfi_reverse_scored <span class="sc">|&gt;</span> </span>
 <span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>    <span class="fu">select</span>(<span class="fu">contains</span>(<span class="fu">paste0</span>(<span class="st">&quot;bfi_&quot;</span>, i))) <span class="co"># selecting only the columns of one subscale</span></span>
 <span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  </span>
-<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  correlation_matrix <span class="ot">&lt;-</span> <span class="fu">cor</span>(data_bfi_reverse_scored_subscale, <span class="at">use =</span> <span class="st">&quot;complete.obs&quot;</span>) <span class="co"># making a correlation matrix</span></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  correlation_matrix <span class="ot">&lt;-</span> <span class="fu">cor</span>(data_bfi_reverse_scored_subscale, <span class="at">use =</span> <span class="st">&quot;complete.obs&quot;</span>) <span class="co"># making a correlation matrix with only the complete observations</span></span>
 <span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>  <span class="fu">print</span>(correlation_matrix)</span>
 <span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>  <span class="fu">print</span>(<span class="fu">ifelse</span>(<span class="fu">all</span>(correlation_matrix <span class="sc">&gt;</span> <span class="dv">0</span>), </span>
 <span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>               <span class="fu">paste0</span>(<span class="st">&quot;All the correlations of the subscale &quot;</span>,</span>
@@ -1867,9 +1864,9 @@ scoring.</p>
 </ul>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="co"># set new variable to include if all the values are between 1 and 6 or are missing value</span></span>
 <span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="co"># set another new variable to include if either all values of one subscale or missing or all values of one subscale are not missing</span></span>
-<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>data_bfi_reverse_scored_exclusion_variable <span class="ot">&lt;-</span> data_bfi_reverse_scored <span class="sc">|&gt;</span> </span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>data_bfi_reverse_scored_exclusion <span class="ot">&lt;-</span> data_bfi_reverse_scored <span class="sc">|&gt;</span> </span>
 <span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  <span class="fu">rowwise</span>() <span class="sc">|&gt;</span> </span>
-<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">exclude_between_1_and_6 =</span> <span class="fu">ifelse</span>(</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">exclude_not_between_1_and_6 =</span> <span class="fu">ifelse</span>(</span>
 <span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>    <span class="fu">all</span>(<span class="fu">c_across</span>(<span class="fu">starts_with</span>(<span class="st">&quot;bfi_&quot;</span>)) <span class="sc">%in%</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">6</span> <span class="sc">|</span> <span class="fu">is.na</span>(<span class="fu">c_across</span>(<span class="fu">starts_with</span>(<span class="st">&quot;bfi_&quot;</span>)))), </span>
 <span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>    <span class="st">&quot;include&quot;</span>,</span>
 <span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>    <span class="st">&quot;exclude&quot;</span></span>
@@ -1887,42 +1884,42 @@ scoring.</p>
 </div>
 <div id="mean-score-of-subscales" class="section level2">
 <h2>Mean-score of subscales</h2>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>data_bfi_reverse_scored_exclusion_variable<span class="sc">$</span>mean_bfi_a <span class="ot">&lt;-</span> <span class="fu">rowMeans</span>(<span class="fu">select</span>(data_bfi_reverse_scored_exclusion_variable,<span class="fu">starts_with</span>(<span class="st">&quot;bfi_a&quot;</span>)),</span>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>data_bfi_reverse_scored_exclusion<span class="sc">$</span>mean_bfi_a <span class="ot">&lt;-</span> <span class="fu">rowMeans</span>(<span class="fu">select</span>(data_bfi_reverse_scored_exclusion,<span class="fu">starts_with</span>(<span class="st">&quot;bfi_a&quot;</span>)),</span>
 <span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>                                                                  <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>data_bfi_reverse_scored_exclusion_variable<span class="sc">$</span>mean_bfi_c <span class="ot">&lt;-</span> <span class="fu">rowMeans</span>(<span class="fu">select</span>(data_bfi_reverse_scored_exclusion_variable,<span class="fu">starts_with</span>(<span class="st">&quot;bfi_c&quot;</span>)),</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>data_bfi_reverse_scored_exclusion<span class="sc">$</span>mean_bfi_c <span class="ot">&lt;-</span> <span class="fu">rowMeans</span>(<span class="fu">select</span>(data_bfi_reverse_scored_exclusion,<span class="fu">starts_with</span>(<span class="st">&quot;bfi_c&quot;</span>)),</span>
 <span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>                                                                  <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>data_bfi_reverse_scored_exclusion_variable<span class="sc">$</span>mean_bfi_e <span class="ot">&lt;-</span> <span class="fu">rowMeans</span>(<span class="fu">select</span>(data_bfi_reverse_scored_exclusion_variable,<span class="fu">starts_with</span>(<span class="st">&quot;bfi_e&quot;</span>)),</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>data_bfi_reverse_scored_exclusion<span class="sc">$</span>mean_bfi_e <span class="ot">&lt;-</span> <span class="fu">rowMeans</span>(<span class="fu">select</span>(data_bfi_reverse_scored_exclusion,<span class="fu">starts_with</span>(<span class="st">&quot;bfi_e&quot;</span>)),</span>
 <span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>                                                                  <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>data_bfi_reverse_scored_exclusion_variable<span class="sc">$</span>mean_bfi_n <span class="ot">&lt;-</span> <span class="fu">rowMeans</span>(<span class="fu">select</span>(data_bfi_reverse_scored_exclusion_variable,<span class="fu">starts_with</span>(<span class="st">&quot;bfi_n&quot;</span>)),</span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>data_bfi_reverse_scored_exclusion<span class="sc">$</span>mean_bfi_n <span class="ot">&lt;-</span> <span class="fu">rowMeans</span>(<span class="fu">select</span>(data_bfi_reverse_scored_exclusion,<span class="fu">starts_with</span>(<span class="st">&quot;bfi_n&quot;</span>)),</span>
 <span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>                                                                  <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>data_bfi_reverse_scored_exclusion_variable<span class="sc">$</span>mean_bfi_o <span class="ot">&lt;-</span> <span class="fu">rowMeans</span>(<span class="fu">select</span>(data_bfi_reverse_scored_exclusion_variable,<span class="fu">starts_with</span>(<span class="st">&quot;bfi_o&quot;</span>)),</span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>data_bfi_reverse_scored_exclusion<span class="sc">$</span>mean_bfi_o <span class="ot">&lt;-</span> <span class="fu">rowMeans</span>(<span class="fu">select</span>(data_bfi_reverse_scored_exclusion,<span class="fu">starts_with</span>(<span class="st">&quot;bfi_o&quot;</span>)),</span>
 <span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>                                                                  <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a></span>
 <span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a><span class="co"># check if the means are not smaller than 1 and not bigger than 6</span></span>
 <span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a></span>
 <span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">c</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;c&quot;</span>, <span class="st">&quot;e&quot;</span>, <span class="st">&quot;n&quot;</span>, <span class="st">&quot;o&quot;</span>)){</span>
-<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a>  <span class="cf">if</span>(data_bfi_reverse_scored_exclusion_variable <span class="sc">|&gt;</span> </span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a>  <span class="cf">if</span>(data_bfi_reverse_scored_exclusion <span class="sc">|&gt;</span> </span>
 <span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a>     <span class="fu">mutate</span>(<span class="at">bounded_correctly =</span> <span class="fu">between</span>(<span class="fu">get</span>(<span class="fu">paste0</span>(<span class="st">&quot;mean_bfi_&quot;</span>, i)), <span class="at">left =</span> <span class="dv">1</span>, <span class="at">right =</span> <span class="dv">6</span>)) <span class="sc">|&gt;</span></span>
 <span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a>     <span class="fu">filter</span>(bounded_correctly <span class="sc">!=</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
 <span id="cb8-18"><a href="#cb8-18" tabindex="-1"></a>     <span class="fu">nrow</span>() <span class="sc">==</span> <span class="dv">0</span>) {</span>
-<span id="cb8-19"><a href="#cb8-19" tabindex="-1"></a>    <span class="fu">print</span>(<span class="fu">paste0</span>(<span class="st">&quot;The mean score of the subscale &quot;</span>, i, <span class="st">&quot; does not violate the min and max possible score.&quot;</span>))</span>
+<span id="cb8-19"><a href="#cb8-19" tabindex="-1"></a>    <span class="fu">print</span>(<span class="fu">paste0</span>(<span class="st">&quot;The mean scores of the subscale &quot;</span>, i, <span class="st">&quot; do not violate the min and max possible score.&quot;</span>))</span>
 <span id="cb8-20"><a href="#cb8-20" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
-<span id="cb8-21"><a href="#cb8-21" tabindex="-1"></a>    <span class="fu">print</span>(<span class="fu">paste0</span>(<span class="st">&quot;The mean score of the subscale &quot;</span>, i, <span class="st">&quot; does violate the min and max possible score.&quot;</span>))</span>
+<span id="cb8-21"><a href="#cb8-21" tabindex="-1"></a>    <span class="fu">print</span>(<span class="fu">paste0</span>(<span class="st">&quot;The mean scores of the subscale &quot;</span>, i, <span class="st">&quot; do violate the min and max possible score.&quot;</span>))</span>
 <span id="cb8-22"><a href="#cb8-22" tabindex="-1"></a>  }</span>
 <span id="cb8-23"><a href="#cb8-23" tabindex="-1"></a>}</span></code></pre></div>
-<pre><code>## [1] &quot;The mean score of the subscale a does not violate the min and max possible score.&quot;
-## [1] &quot;The mean score of the subscale c does not violate the min and max possible score.&quot;
-## [1] &quot;The mean score of the subscale e does not violate the min and max possible score.&quot;
-## [1] &quot;The mean score of the subscale n does not violate the min and max possible score.&quot;
-## [1] &quot;The mean score of the subscale o does not violate the min and max possible score.&quot;</code></pre>
+<pre><code>## [1] &quot;The mean scores of the subscale a do not violate the min and max possible score.&quot;
+## [1] &quot;The mean scores of the subscale c do not violate the min and max possible score.&quot;
+## [1] &quot;The mean scores of the subscale e do not violate the min and max possible score.&quot;
+## [1] &quot;The mean scores of the subscale n do not violate the min and max possible score.&quot;
+## [1] &quot;The mean scores of the subscale o do not violate the min and max possible score.&quot;</code></pre>
 <p>None of the mean score violates the min and max possible score. So I
 can take this as one hint, that the mean was build correctly.</p>
 </div>
 </div>
 <div id="iat" class="section level1">
 <h1>IAT</h1>
-<div id="scoring-the-trial-level-iat" class="section level2">
-<h2>Scoring the trial-level IAT</h2>
+<div id="scoring-the-trial-level-iat-using-greenwald-d-score" class="section level2">
+<h2>Scoring the trial-level IAT using Greenwald “D” score</h2>
 <p>Greenwald “D” score:</p>
 <ul>
 <li>Calculate a mean RT (“mean1”) for blocks 3 and 6 (one score using
@@ -2040,10 +2037,11 @@ both blocks)</li>
 frames.</p>
 <div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a>data_processed <span class="ot">&lt;-</span></span>
 <span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>  data_demographics_wide <span class="sc">|&gt;</span></span>
-<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a>  <span class="fu">full_join</span>(data_bfi_reverse_scored_exclusion_variable, <span class="at">by =</span> <span class="st">&quot;unique_id&quot;</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a>  <span class="fu">full_join</span>(data_bfi_reverse_scored_exclusion, <span class="at">by =</span> <span class="st">&quot;unique_id&quot;</span>) <span class="sc">|&gt;</span> </span>
 <span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a>  <span class="fu">full_join</span>(data_iat_without_practice_D_exclusions, <span class="at">by =</span> <span class="st">&quot;unique_id&quot;</span>) </span>
 <span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a></span>
-<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a><span class="fu">print</span>(data_processed)</span></code></pre></div>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a></span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a><span class="fu">print</span>(data_processed)</span></code></pre></div>
 <pre><code>## # A tibble: 1,932 × 56
 ##    unique_id age   sex   bfi_a1 bfi_a2 bfi_a3 bfi_a4 bfi_a5 bfi_a6 bfi_a7 bfi_a8
 ##        &lt;dbl&gt; &lt;chr&gt; &lt;chr&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;
@@ -2066,15 +2064,19 @@ frames.</p>
 ## #   bfi_n7 &lt;dbl&gt;, bfi_n8 &lt;dbl&gt;, bfi_o1 &lt;dbl&gt;, bfi_o10 &lt;dbl&gt;, bfi_o2 &lt;dbl&gt;, …</code></pre>
 <div id="master-exclude-variable" class="section level2">
 <h2>Master exclude variable</h2>
-<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a>data_processed_master_exclude <span class="ot">&lt;-</span></span>
-<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a>  data_processed <span class="sc">|&gt;</span> </span>
-<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a>    <span class="at">exclusion =</span> <span class="fu">case_when</span>(exclude_between_1_and_6 <span class="sc">==</span> <span class="st">&quot;exclude&quot;</span> <span class="sc">~</span> <span class="st">&quot;exclude&quot;</span>,</span>
-<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a>                          exclude_incomplete_data <span class="sc">==</span> <span class="st">&quot;exclude&quot;</span>  <span class="sc">~</span><span class="st">&quot;exclude&quot;</span>,</span>
-<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a>                          exclude_iat <span class="sc">==</span> <span class="st">&quot;exclude&quot;</span> <span class="sc">~</span><span class="st">&quot;exclude&quot;</span>,</span>
+<p>Setting the variable exclusion to exclude if one of the exclusion
+variables is “exclude”. Also setting it to exclude, if all the exclusion
+variables are NA, because that means there is only demographic data and
+not data for BFI and IAT.</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a>data_processed_master_exclude <span class="ot">&lt;-</span> data_processed <span class="sc">|&gt;</span> </span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a>    <span class="at">exclusion =</span> <span class="fu">case_when</span>(exclude_not_between_1_and_6 <span class="sc">==</span> <span class="st">&quot;exclude&quot;</span><span class="sc">~</span> <span class="st">&quot;exclude&quot;</span>,</span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a>                          exclude_incomplete_data <span class="sc">==</span> <span class="st">&quot;exclude&quot;</span>  <span class="sc">~</span> <span class="st">&quot;exclude&quot;</span>,</span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a>                          exclude_iat <span class="sc">==</span> <span class="st">&quot;exclude&quot;</span> <span class="sc">~</span> <span class="st">&quot;exclude&quot;</span>,</span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a>                          <span class="fu">is.na</span>(exclude_not_between_1_and_6) <span class="sc">&amp;</span> <span class="fu">is.na</span>(exclude_incomplete_data) <span class="sc">&amp;</span> <span class="fu">is.na</span>(exclude_iat) <span class="sc">~</span> <span class="st">&quot;exclude&quot;</span>,</span>
 <span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a>                          <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">&quot;include&quot;</span>)</span>
 <span id="cb17-8"><a href="#cb17-8" tabindex="-1"></a>  ) <span class="sc">|&gt;</span> </span>
-<span id="cb17-9"><a href="#cb17-9" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">c</span>(exclude_between_1_and_6, exclude_incomplete_data, exclude_iat))</span></code></pre></div>
+<span id="cb17-9"><a href="#cb17-9" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">c</span>(exclude_not_between_1_and_6, exclude_incomplete_data, exclude_iat))</span></code></pre></div>
 </div>
 </div>
 <div id="write-to-disk" class="section level1">

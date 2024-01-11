@@ -63,7 +63,6 @@ n_rows <- 100
 
 # generating random values for a few columns
 gender <- sample(c("male", "female"), n_rows, replace = TRUE)
-relationship <- sample(c("yes", "no"), n_rows, replace = TRUE)
 extraversion <- rnorm(n_rows, mean = 3, sd = 1) |> 
   round(1) |> 
   pmin(5) |> 
@@ -71,7 +70,7 @@ extraversion <- rnorm(n_rows, mean = 3, sd = 1) |>
 
 
 # creating the data frame
-sim_data <- data.frame(gender, relationship, extraversion)
+sim_data <- data.frame(gender, extraversion)
 
 # show the first few rows of the dataset
 head(sim_data)

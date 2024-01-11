@@ -254,7 +254,7 @@ ggplot(data_processed_after_exclusions, aes(x = IAT_score)) +
 
 ```{r}
 # making a new data frame with only the columnes required for the correlatio matrix
-data_processed_cols_correlation <- data_processed |> 
+data_processed_cols_correlation <- data_processed_after_exclusions |> 
   select(c(mean_bfi_a, mean_bfi_c, mean_bfi_e, mean_bfi_n, mean_bfi_o, IAT_score))
 
 # making the correlation matrix
@@ -292,7 +292,7 @@ To test this I'm doing a regression for each BFI subscale.
 ```{r}
 
 # creating the model
-model_a <- lm(IAT_score ~ mean_bfi_a, data = data_processed)
+model_a <- lm(IAT_score ~ mean_bfi_a, data = data_processed_after_exclusions)
 
 # get summary of the model
 summary(model_a)
@@ -307,7 +307,7 @@ report(model_a)
 ```{r}
 
 # creating the model
-model_c <- lm(IAT_score ~ mean_bfi_c, data = data_processed)
+model_c <- lm(IAT_score ~ mean_bfi_c, data = data_processed_after_exclusions)
 
 # get summary of the model
 summary(model_c)
@@ -322,7 +322,7 @@ report(model_c)
 ```{r}
 
 # creating the model
-model_e <- lm(IAT_score ~ mean_bfi_e, data = data_processed)
+model_e <- lm(IAT_score ~ mean_bfi_e, data = data_processed_after_exclusions)
 
 # get summary of the model
 summary(model_e)
@@ -339,7 +339,7 @@ report(model_e)
 ```{r}
 
 # creating the model
-model_n <- lm(IAT_score ~ mean_bfi_n, data = data_processed)
+model_n <- lm(IAT_score ~ mean_bfi_n, data = data_processed_after_exclusions)
 
 # get summary of the model
 summary(model_n)
@@ -355,7 +355,7 @@ report(model_n)
 ```{r}
 
 # creating the model
-model_o <- lm(IAT_score ~ mean_bfi_o, data = data_processed)
+model_o <- lm(IAT_score ~ mean_bfi_o, data = data_processed_after_exclusions)
 
 # get summary of the model
 summary(model_o)
